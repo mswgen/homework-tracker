@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cache-v5';
+const CACHE_NAME = 'cache-v6';
 
 self.addEventListener('install', event => {
     self.skipWaiting();
@@ -15,7 +15,7 @@ self.addEventListener('activate', event => {
                             return cache.keys().then(keys => {
                                 return Promise.all(
                                     keys.map(request => {
-                                        if (request.url.includes('/api/post')) {
+                                        if (request.url.includes('/api/post') && request.method === 'GET') {
                                             return caches.open(CACHE_NAME).then(async newCache => {
                                                 return newCache.put(request, (await cache.match(request)).clone()).then(() => {
                                                     return cache.delete(request);
@@ -71,7 +71,7 @@ self.addEventListener('fetch', event => {
     event.respondWith(
         event.request.url.includes('/api') ?
             (
-                (event.request.url.includes('/api/post')) ? (
+                (event.request.url.includes('/api/post') && event.request.method === 'GET') ? (
                     fetch(event.request)
                         .then(response => {
                             return caches.open(CACHE_NAME).then(cache => {

@@ -14,7 +14,7 @@ export default function Header() {
 
     useEffect(() => {
         if (navigator.userAgent.includes('KAKAO')) {
-          location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(process.env.NEXT_PUBLIC_URL || 'http://localhost:3000');
+          location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(location.href);
         }
       }, []);
     useEffect(() => {
