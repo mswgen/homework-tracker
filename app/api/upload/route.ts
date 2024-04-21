@@ -1,6 +1,6 @@
 import { MongoClient } from "mongodb";
-import fs from 'fs/promises';
-import path from 'path';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 const crypto = globalThis.crypto;
 
 export const dynamic = 'force-dynamic';
@@ -46,6 +46,11 @@ export async function POST(request: Request) {
     }
     const fileArrayBuffer = await file.arrayBuffer();
     const hash = Buffer.from(await crypto.subtle.digest('SHA-1', fileArrayBuffer)).toString('hex');
+    try {
+        await fs.stat('./upload');
+    } catch {
+        await fs.mkdir('./upload');
+    }
     const filePath = await fs.readdir('./upload').then(files => files.find(fileName => fileName.includes(hash)));
     if (!filePath) {
         await fs.writeFile(`./upload/${hash}${path.parse(file.name).ext}`, Buffer.from(fileArrayBuffer));
