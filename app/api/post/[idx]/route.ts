@@ -97,7 +97,7 @@ export async function PUT(request: Request, { params }: { params: { idx: string 
             sendNotification(sub, JSON.stringify([{
                 title: `${postType[data.type]} 공지 수정됨`,
                 body: `${data.title}이(가) 수정되었습니다.`,
-                tag: params.idx.toString()
+                tag: params.idx
             }])).catch(() => { });
         });
     });

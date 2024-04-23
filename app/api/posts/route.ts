@@ -31,11 +31,11 @@ export async function GET(request: Request) {
     }
     const postsCollection = db.collection('posts');
     let posts = await postsCollection.find().toArray();
-    await Promise.all(posts.filter(post => post.deadline && (new Date(post.deadline) as unknown as number <= (new Date() as unknown as number) - 1000 * 60 * 60 * 24)).map(async post => {
+    await Promise.all(posts.filter(post => post.deadline && (new Date(post.deadline) as unknown as number <= (new Date() as unknown as number) - 1000 * 60 * 60 * 15)).map(async post => {
         return postsCollection.deleteOne({ count: post.count });
     }));
     client.close();
-    posts = posts.filter(post => !post.deadline || (new Date(post.deadline) as unknown as number > (new Date() as unknown as number) - 1000 * 60 * 60 * 24));
+    posts = posts.filter(post => !post.deadline || (new Date(post.deadline) as unknown as number > (new Date() as unknown as number) - 1000 * 60 * 60 * 15));
     const sortedPosts = posts.filter(post => post.type === 0).filter(post => post.deadline != null).sort((a, b) => (new Date(a.deadline) as unknown as number) - (new Date(b.deadline) as unknown as number))
         .concat(posts.filter(post => post.type === 0).filter(post => post.deadline == null).reverse())
         .concat(posts.filter(post => post.type > 0).filter(post => post.deadline != null).sort((a, b) => a.deadline === b.deadline ? a.type - b.type : (new Date(a.deadline) as unknown as number) - (new Date(b.deadline) as unknown as number)))

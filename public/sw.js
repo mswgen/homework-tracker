@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cache-v6';
+const CACHE_NAME = 'cache-v7';
 
 self.addEventListener('install', event => {
     self.skipWaiting();
@@ -74,6 +74,7 @@ self.addEventListener('fetch', event => {
                 (event.request.url.includes('/api/post') && event.request.method === 'GET') ? (
                     fetch(event.request)
                         .then(response => {
+                            if (!response.ok) return response;
                             return caches.open(CACHE_NAME).then(cache => {
                                 cache.put(event.request, response.clone());
                                 return response;
@@ -101,7 +102,7 @@ self.addEventListener('fetch', event => {
                 return (
                     cacheResponse ||
                     fetch(event.request).then(response => {
-                        cache.put(event.request, response.clone());
+                        if (response.ok) cache.put(event.request, response.clone());
                         return response;
                     })
                 );
