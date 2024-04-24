@@ -74,7 +74,7 @@ export default function Home() {
                 if (!isPWA) {
                   setDialogTitle('PWA 설치');
                   setDialogType('alert');
-                  setDialogContent('알림을 받으려면 PWA 설치가 필요합니다.\n\n컴퓨터에서는 주소창 오른쪽에 있는 아이콘을 클릭하여 설치합니다.\nAndroid Chrome에서는 주소창 오른쪽 메뉴에서 "앱 설치"를 통해 설치합니다.\n삼성 인터넷에서는 주소창 오른쪽 버튼을 통해 설치합니다.\niOS용 Safari에서는 공유-홈 화면에 추가(이 사이트에서는 바로가기 대신 앱이 설치됨)를 눌러 설치합니다.');
+                  setDialogContent('알림을 받으려면 PWA 설치가 필요합니다.\n\n컴퓨터에서는 주소창 오른쪽에 있는 아이콘을 클릭하여 설치합니다.\nAndroid Chrome에서는 주소창 오른쪽 메뉴에서 "앱 설치"를 통해 설치합니다.\n삼성 인터넷에서는 주소창 오른쪽 버튼을 통해 설치합니다.\niOS용 Safari에서는 공유-홈 화면에 추가(이 사이트에서는 바로가기 대신 앱이 설치됨)를 눌러 설치합니다.\n\nPWA를 설치한 다음 이를 실행하여 알림 받기를 누르세요.');
                   setDialogOpen(true);
                 } else {
                   if (Notification.permission === 'default') {
