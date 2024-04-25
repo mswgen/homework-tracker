@@ -100,7 +100,7 @@ const OtherAccountEditpage: React.FC<{ params: { userid: string } }> = ({ params
                 <br />
                 <label htmlFor="name">이름</label>
                 <br />
-                <input type="text" id="firstName" value={firstName} disabled={myPerm !== 0} className="border border-slate-400 h-12 rounded-lg p-4 mr-[5%] w-[45%] dark:bg-[#424242]" onChange={e => {
+                <input type="text" id="firstName" value={firstName} disabled={myPerm > 1 || (myPerm > 0 && perm < 2)} className="border border-slate-400 h-12 rounded-lg p-4 mr-[5%] w-[45%] dark:bg-[#424242]" onChange={e => {
                     setFirstName(e.currentTarget.value);
                     setSaveState('저장 중');
                     fetch('/api/account', {
@@ -122,7 +122,7 @@ const OtherAccountEditpage: React.FC<{ params: { userid: string } }> = ({ params
                         setSaveErrorMsg('오프라인 상태');
                     });
                 }} />
-                <input type="text" id="lastName" value={lastName} disabled={myPerm !== 0} className="border border-slate-400 h-12 rounded-lg p-4 ml-[5%] w-[45%] dark:bg-[#424242]" onChange={e => {
+                <input type="text" id="lastName" value={lastName} disabled={myPerm > 1 || (myPerm > 0 && perm < 2)} className="border border-slate-400 h-12 rounded-lg p-4 ml-[5%] w-[45%] dark:bg-[#424242]" onChange={e => {
                     setLastName(e.currentTarget.value);
                     setSaveState('저장 중');
                     fetch('/api/account', {
@@ -148,10 +148,10 @@ const OtherAccountEditpage: React.FC<{ params: { userid: string } }> = ({ params
                 <br />
                 <label htmlFor="pwd">비밀번호 변경</label>
                 <br />
-                <input type="password" id="pwd" autoComplete="new-password" value={pwd} className="border border-slate-400 h-12 rounded-lg p-4 w-[70%] dark:bg-[#424242]" onChange={e => {
+                <input type="password" id="pwd" autoComplete="new-password" disabled={account?.id !== params.userid && myPerm > 0} value={pwd} className="border border-slate-400 h-12 rounded-lg p-4 w-[70%] dark:bg-[#424242]" onChange={e => {
                     setPwd(e.currentTarget.value);
                 }} />
-                <button className="w-[20%] ml-[10%] mr-0 pt-3 pb-3 mt-4 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring" onClick={e => {
+                <button className="w-[20%] ml-[10%] mr-0 pt-3 pb-3 mt-4 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring" disabled={account?.id !== params.userid && myPerm > 0} onClick={e => {
                     e.preventDefault();
                     setSaveState('저장 중');
                     fetch('/api/account', {
@@ -207,7 +207,7 @@ const OtherAccountEditpage: React.FC<{ params: { userid: string } }> = ({ params
                 <br />
                 <label htmlFor="accepted">상태</label>
                 <br />
-                <input type="checkbox" id="accepted" checked={isAccepted} disabled={myPerm !== 0} className="mr-2" onChange={e => {
+                <input type="checkbox" id="accepted" checked={isAccepted} disabled={myPerm > 1 || (myPerm > 0 && perm < 2)} className="mr-2" onChange={e => {
                     setIsAccepted(e.currentTarget.checked);
                     setSaveState('저장 중');
                     fetch('/api/account', {

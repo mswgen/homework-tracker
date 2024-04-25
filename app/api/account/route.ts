@@ -103,31 +103,51 @@ export async function PUT(request: Request) {
         client.close();
         return new Response(JSON.stringify({ code: 1, msg: '로그인 상태가 아닙니다.' }), { status: 401 });
     }
-
-    const usersCollection = db.collection('users');
-    const loginedUser = await usersCollection.findOne({ id: tokenToUser.id });
-    if (loginedUser!.perm !== 0 && (firstName != null || lastName != null || perm != null || pwd != null)) {
-        client.close();
-        return new Response(JSON.stringify({ code: 1, msg: '이름 또는 권한을 수정하려면 root 권한이 필요합니다.' }), { status: 403 });
-    }
-    if (loginedUser!.perm > 1 && accepted != null) {
-        client.close();
-        return new Response(JSON.stringify({ code: 1, msg: '승인 여부를 수정하려면 관리자 권한이 필요합니다.' }), { status: 403 });
-    }
-    if (loginedUser!.perm !== 0 && id !== loginedUser!.id && !(loginedUser!.perm === 1 && accepted != null && firstName == null && lastName == null && perm == null && pwd == null)) {
-        client.close();
-        return new Response(JSON.stringify({ code: 1, msg: '다른 사용자의 정보를 수정하려면 root 권한이 필요합니다.' }), { status: 403 });
-    }
     if (typeof id !== 'string') {
         client.close();
         return new Response(JSON.stringify({ code: 1, msg: '입력한 정보가 올바르지 않습니다.' }), { status: 400 });
     }
+
+    const usersCollection = db.collection('users');
+    const loginedUser = await usersCollection.findOne({ id: tokenToUser.id });
+    switch (loginedUser!.perm) {
+        case 0:
+            break;
+        case 1:
+            if (loginedUser!.id === id) {
+                if (perm != null || firstName != null || lastName != null || accepted != null) {
+                    client.close();
+                    return new Response(JSON.stringify({ code: 1, msg: '이름, 승인 여부, 권한을 수정하려면 root 권한이 필요합니다.' }), { status: 403 });
+                }
+            } else {
+                if (perm != null || pwd != null) {
+                    client.close();
+                    return new Response(JSON.stringify({ code: 1, msg: '권한 또는 비밀번호를 수정하려면 root 권한이 필요합니다.' }), { status: 403 });
+                }
+            }
+            break;
+        case 2:
+            if (loginedUser!.id === id) {
+                if (perm != null || firstName != null || lastName != null || accepted != null) {
+                    client.close();
+                    return new Response(JSON.stringify({ code: 1, msg: '이름, 승인 여부, 권한을 수정하려면 root 권한이 필요합니다.' }), { status: 403 });
+                }
+            } else {
+                client.close();
+                return new Response(JSON.stringify({ code: 1, msg: '다른 사용자의 정보를 수정하려면 root 권한이 필요합니다.' }), { status: 403 });
+            }
+            break;
+        default:
+            client.close();
+            return new Response(JSON.stringify({ code: 1, msg: '알 수 없는 오류가 발생했습니다.' }), { status: 500 });
+    }
+
     const user = await usersCollection.findOne({ id });
     if (!user) {
         client.close();
         return new Response(JSON.stringify({ code: 1, msg: '입력한 ID가 존재하지 않습니다.' }), { status: 400 });
     } else {
-        if (loginedUser!.perm !== 0 && user.perm < 2) {
+        if (loginedUser!.perm !== 0 && id !== loginedUser!.id && user.perm < 2) {
             client.close();
             return new Response(JSON.stringify({ code: 1, msg: '관리자 이상의 권한을 가진 사용자의 정보를 수정하려면 root 권한이 필요합니다.' }), { status: 403 });
         }
