@@ -1,6 +1,7 @@
 'use client';
 
 import Image from "next/image";
+import Link from "next/link";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -45,7 +46,7 @@ export default function MyAccountEditpage() {
         } else {
             router.replace('/login/id');
         }
-    }, [account, isClient, router, setAccount]);
+    }, [account, isClient, router, setAccount, isOffline]);
     useEffect(() => {
         if (isOffline) {
             const interval = setInterval(() => {
@@ -132,6 +133,13 @@ export default function MyAccountEditpage() {
                         setSaveErrorMsg('오프라인 상태');
                     });
                 }} />
+                <br />
+                <br />
+                <label htmlFor="passkey">패스키</label>
+                <br />
+                <Link href="/register/passkey">
+                    <button className="w-[40%] ml-0 mr-0 pt-3 pb-3 mt-4 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring">패스키 등록하기</button>
+                </Link>
                 <br />
                 <br />
                 <label htmlFor="pwd">비밀번호 변경</label>

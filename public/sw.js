@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cache-v9';
+const CACHE_NAME = 'cache-v10';
 
 self.addEventListener('install', event => {
     self.skipWaiting();
@@ -52,6 +52,8 @@ self.addEventListener('activate', event => {
                 '/github.svg',
                 '/offline.svg',
                 '/login.svg',
+                '/copy.svg',
+                '/check.svg',
                 '/icon1.png',
                 '/icon2.png',
                 '/icon3.png',

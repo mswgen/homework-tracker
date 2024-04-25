@@ -38,7 +38,7 @@ export default function MyAccountInfoPage() {
         } else {
             router.replace('/login/id');
         }
-    }, [account, isClient, router, setAccount]);
+    }, [account, isClient, router, setAccount, isOffline]);
     useEffect(() => {
         if (isOffline) {
             const interval = setInterval(() => {

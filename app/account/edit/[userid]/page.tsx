@@ -41,7 +41,7 @@ const OtherAccountEditpage: React.FC<{ params: { userid: string } }> = ({ params
         }).catch(() => {
             setIsOffline(true);
         })
-    }, [isClient, router, params.userid]);
+    }, [isClient, router, params.userid, isOffline]);
     useEffect(() => {
         if (isOffline) {
             const interval = setInterval(() => {

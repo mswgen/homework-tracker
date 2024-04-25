@@ -74,7 +74,7 @@ export default function Home() {
                 if (!isPWA) {
                   setDialogTitle('PWA 설치');
                   setDialogType('alert');
-                  setDialogContent('알림을 받으려면 PWA 설치가 필요합니다.\n\n컴퓨터에서는 주소창 오른쪽에 있는 아이콘을 클릭하여 설치합니다.\nAndroid Chrome에서는 주소창 오른쪽 메뉴에서 "앱 설치"를 통해 설치합니다.\n삼성 인터넷에서는 주소창 오른쪽 버튼을 통해 설치합니다.\niOS용 Safari에서는 공유-홈 화면에 추가(이 사이트에서는 바로가기 대신 앱이 설치됨)를 눌러 설치합니다.\n\nPWA를 설치한 다음 이를 실행하여 알림 받기를 누르세요.');
+                  setDialogContent('알림을 받으려면 PWA 설치가 필요합니다.\n\n컴퓨터에서는 주소창 오른쪽에 있는 아이콘을 클릭하여 설치합니다.\nAndroid Chrome에서는 주소창 오른쪽 메뉴에서 "앱 설치"를 통해 설치합니다.\n삼성 인터넷에서는 주소창 오른쪽 버튼을 통해 설치합니다.\niOS용 Safari에서는 공유-홈 화면에 추가(이 사이트에서는 바로가기 대신 앱이 설치됨)를 눌러 설치합니다.\n\nPWA를 설치한 다음 이를 실행하여 알림 받기를 누르세요.\n알림 설정에 성공한 경우 이 버튼이 없어집니다.');
                   setDialogOpen(true);
                 } else {
                   if (Notification.permission === 'default') {
@@ -162,13 +162,13 @@ export default function Home() {
               <Link key={post.count} href={`/post/${post.count}`}>
                 <div className="border-t border-t-slate-400">
                   <br />
-                  <h1 className="text-4xl">{post.title}</h1>
-                  <p className={`${post.deadline && (new Date(post.deadline) as unknown as number - 0) >= new Date().setHours(0, 0, 0, 0) && (new Date(post.deadline) as unknown as number - 0) - new Date().setHours(0, 0, 0, 0) <= 1000 * 60 * 60 * 24 * 2 && 'text-red-500'}`}>{deadlineName[post.type ?? 5]}: {post.deadline ? `${(new Date(post.deadline) as unknown as number - 0) == new Date().setHours(0, 0, 0, 0) ? '오늘' : formatDistanceStrict(new Date(post.deadline), new Date(new Date().setHours(0, 0, 0, 0)), { locale: ko, addSuffix: true })}(${new Date(post.deadline).toLocaleDateString('ko-KR', {
+                  <h1 className="text-4xl inline">{post.title}</h1>
+                  <div className={`${post.deadline && (new Date(post.deadline) as unknown as number - 0) >= new Date().setHours(0, 0, 0, 0) && (new Date(post.deadline) as unknown as number - 0) - new Date().setHours(0, 0, 0, 0) <= 1000 * 60 * 60 * 24 * 2 && 'text-red-500'}`}>{Number(post.type) === 0 && <><p className="text-red-500 inline font-bold">중요</p> | </>}{deadlineName[post.type ?? 5]}: {post.deadline ? `${(new Date(post.deadline) as unknown as number - 0) == new Date().setHours(0, 0, 0, 0) ? '오늘' : formatDistanceStrict(new Date(post.deadline), new Date(new Date().setHours(0, 0, 0, 0)), { locale: ko, addSuffix: true })}(${new Date(post.deadline).toLocaleDateString('ko-KR', {
                     weekday: "long",
                     year: "numeric",
                     month: "long",
                     day: "numeric"
-                  })})` : '없음'}</p>
+                  })})` : '없음'}</div>
                 </div>
                 <br />
               </Link>
