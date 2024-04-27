@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 import { useLocalStorage } from "usehooks-ts";
 
 export default function Home() {
+  const [isClient, setIsClient] = useState<boolean>(false);
   const [posts, setPosts] = useState<Array<{ count: number, title: string, type: number, deadline?: Date }>>([]);
   const [canView, setCanView] = useState<boolean>(true);
   const [isPWA, setIsPWA] = useState<boolean>(false);
@@ -24,6 +25,9 @@ export default function Home() {
   const [account, setAccount] = useLocalStorage<LSAccount | null>('account', null);
   const [notification, setNotification] = useLocalStorage<any>('notification', null);
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   useEffect(() => {
     document.documentElement.style.setProperty("--viewport-width", ((document.querySelector('main') as HTMLElement).clientWidth / 9 * 10).toString());
     return () => document.documentElement.style.setProperty("--viewport-width", "100vw");
@@ -59,7 +63,7 @@ export default function Home() {
 
   return (
     <>
-      {canView ?
+      {canView && isClient ?
         <>
           {notification == null ?
             <>
@@ -176,7 +180,7 @@ export default function Home() {
           })}
         </>
         : (
-          account ? (
+          (account && account.token && isClient) ? (
             <div className="bg-red-500 p-4 border border-red-500 rounded text-white">
               <p>관리자의 계정 승인이 필요합니다.</p>
             </div>
