@@ -66,7 +66,7 @@ function ImageModal({ src, children }: { src: string, children: React.ReactNode 
             {displayed &&
                 <button className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-50" onClick={e => setDisplayed(false)}>
                     <div className="fixed top-[50%] left-[50%] transform translate-x-[-50%] translate-y-[-50%] z-50">
-                        <Link href={src} target="_blank"><Image src={src} alt={src} width={5000} height={5000} className="w-[80vw]" /></Link>
+                        <Link href={src} target="_blank"><Image src={src} alt={src} width={5000} height={5000} className="w-[90vw] max-w-[100vw] max-h-screen" /></Link>
                     </div>
                 </button>
             }
