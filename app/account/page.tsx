@@ -96,16 +96,16 @@ export default function MyAccountInfoPage() {
                         }
                     }).then(async () => {
                         setAccount(null);
+                        setNotification(null);
                         if ('serviceWorker' in navigator) {
                             const registration = await navigator.serviceWorker.ready;
                             const subscription = await registration.pushManager.getSubscription();
                             if (subscription) {
                                 await subscription.unsubscribe();
-                                setNotification(null);
                             }
                         }
                         router.push('/');
-                    })
+                    });
                 }}>로그아웃</button>
             </div>
         </div>

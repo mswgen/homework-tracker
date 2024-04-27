@@ -42,6 +42,10 @@ export default function Home() {
     }).then(response => {
       if (!response.ok) {
         setCanView(false);
+        if (response.status === 401) {
+          setAccount(null);
+          setNotification(null);
+        }
       } else {
         setCanView(true);
         response.json().then(data => {
@@ -49,7 +53,7 @@ export default function Home() {
         });
       }
     })
-  }, [account]);
+  }, [account, setAccount, setNotification]);
   useEffect(() => {
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsPWA(true);
