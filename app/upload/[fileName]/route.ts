@@ -7,5 +7,5 @@ export async function GET(request: Request, { params }: { params: { fileName: st
     if (!(await fs.readdir('./upload')).includes(params.fileName)) {
         return new Response("Not Found", { status: 404 });
     }
-    return new Response(await fs.readFile(`./upload/${params.fileName}`), { status: 200, headers: { 'Content-Type': lookup(params.fileName) || 'application/octet-stream' } });
+    return new Response(await fs.readFile(`./upload/${params.fileName}`), { status: 200, headers: { 'Content-Type': lookup(params.fileName) + '; charset=UTF-8' || 'application/octet-stream' } });
 }
