@@ -36,9 +36,9 @@ export async function POST(request: Request) {
         client.close();
         return new Response(JSON.stringify({ code: 1, msg: '파일을 첨부하세요.' }), { status: 400 });
     }
-    if (file.size > 1024 * 1024 * 128) {
+    if (file.size > 1024 * 1024 * Number(process.env.NEXT_PUBLIC_UPLOAD_LIMIT_MIB)) {
         client.close();
-        return new Response(JSON.stringify({ code: 1, msg: '파일 크기는 128MiB 이하여야 합니다.' }), { status: 400 });
+        return new Response(JSON.stringify({ code: 1, msg: `${process.env.NEXT_PUBLIC_UPLOAD_LIMIT_MIB}MiB 이하의 파일만 업로드할 수 있습니다.` }), { status: 400 });
     }
     if (!file.name || file.name === '') {
         client.close();

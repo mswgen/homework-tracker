@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 const NODE_ENV = process.env.NODE_ENV || "development";
 
 dotenv.config({ path: [`.env.${NODE_ENV}.local`, `.env.${NODE_ENV}`, '.env'] });
+setVapidDetails(`mailto:${process.env.VAPID_EMAIL}`, process.env.NEXT_PUBLIC_VAPID_PUBKEY!, process.env.VAPID_PRIVKEY!);
 
 const client = new MongoClient(process.env.MONGO!);
 // @ts-ignore
@@ -20,7 +21,31 @@ const postsCollection = db.collection('posts');
 const allPosts = await postsCollection.find().toArray();
 const twoDaysLeft = allPosts.filter(post => post.deadline && new Date(post.deadline) as unknown as number - Date.now() <= 2 * 24 * 60 * 60 * 1000 && new Date(post.deadline) as unknown as number - Date.now() > 24 * 60 * 60 * 1000);
 const oneDayLeft = allPosts.filter(post => post.deadline && new Date(post.deadline) as unknown as number - Date.now() <= 24 * 60 * 60 * 1000 && new Date(post.deadline) as unknown as number - Date.now() > 0);
-setVapidDetails(`mailto:${process.env.VAPID_EMAIL}`, process.env.NEXT_PUBLIC_VAPID_PUBKEY!, process.env.VAPID_PRIVKEY!);
+const examsCollection = db.collection('exams');
+// @ts-ignore
+const allExams = await examsCollection.find().toArray();
+const closestExam = allExams.filter(exam => (new Date(exam.subjects.slice(-1)[0].date) as unknown as number) > Date.now() - 24 * 60 * 60 * 1000).sort((a, b) => (new Date(a.subjects[0].date) as unknown as number) - (new Date(b.subjects[0].date) as unknown as number))[0];
+if (closestExam) {
+    console.log(closestExam)
+    const tomorrow = closestExam.subjects.find((subject: any) => (new Date(subject.date) as unknown as number) - Date.now() <= 24 * 60 * 60 * 1000 && (new Date(subject.date) as unknown as number) - Date.now() > 0);
+    if (tomorrow && tomorrow.subjects.length > 0) {
+        const data = {
+            title: `시험 과목 안내`,
+            body: `${new Date(tomorrow.date).toLocaleDateString('ko-KR', {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric"
+            })}\n${tomorrow.subjects.map((subj: string, idx: number) => `${idx + 1}교시 ${subj}`).join('\n')}`,
+            tag: 'exam'
+        };
+        userList.forEach(user => {
+            user.subscriptions.forEach(async (sub: any) => {
+                sendNotification(sub, JSON.stringify([data])).catch(() => { })
+            });
+        });
+    }
+}
 const data = twoDaysLeft.map(post => {
     return {
         title: `${postType[post.type]} ${deadlineName[post.type]} 2일 전`,
@@ -34,9 +59,11 @@ const data = twoDaysLeft.map(post => {
         tag: post.count.toString()
     }
 }));
-userList.forEach(user => {
-    user.subscriptions.forEach(async (sub: any) => {
-        sendNotification(sub, JSON.stringify(data)).catch(() => {})
+if (data.length > 0) {
+    userList.forEach(user => {
+        user.subscriptions.forEach(async (sub: any) => {
+            sendNotification(sub, JSON.stringify(data)).catch(() => { })
+        });
     });
-});
+}
 client.close();

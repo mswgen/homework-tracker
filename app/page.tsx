@@ -14,6 +14,7 @@ import { useLocalStorage } from "usehooks-ts";
 export default function Home() {
   const [isClient, setIsClient] = useState<boolean>(false);
   const [posts, setPosts] = useState<Array<{ count: number, title: string, type: number, deadline?: Date }>>([]);
+  const [exam, setExam] = useState<{ year: number, semester: 1 | 2, idx: 1 | 2, subjects: Array<{ date: string, subjects: Array<string> }> } | null>(null);
   const [canView, setCanView] = useState<boolean>(true);
   const [isPWA, setIsPWA] = useState<boolean>(false);
   const [dialogTtile, setDialogTitle] = useState<string>('');
@@ -49,7 +50,8 @@ export default function Home() {
       } else {
         setCanView(true);
         response.json().then(data => {
-          setPosts(data);
+          setPosts(data.posts);
+          setExam(data.exam);
         });
       }
     })
@@ -165,6 +167,28 @@ export default function Home() {
           }
           <br />
           <br />
+          {exam &&
+            <div className="border-t border-t-slate-400">
+              <br />
+              <p className="text-center">{exam.year}년 {exam.semester}학기 {exam.idx}차 지필평가</p>
+              <h1 className="text-6xl text-center">{
+                (new Date() as unknown as number) <= (new Date(exam.subjects[0].date) as unknown as number) ?
+                  <p>{`D-${Math.ceil((new Date(exam.subjects[0].date) as unknown as number - (new Date() as unknown as number)) / 1000 / 60 / 60 / 24)}`}</p>
+                  : (
+                    (new Date(exam.subjects.slice(-1)[0].date) as unknown as number) <= (new Date() as unknown as number - 9.5 * 60 * 60 * 1000) ?
+                      <>
+                        <p>수고하셨습니다!</p>
+                        <p className="text-base">시험이 종료되었습니다.</p>
+                      </>
+                      : <>
+                        <p>시험 {exam.subjects.indexOf(exam.subjects.find(subj => (new Date(subj.date) as unknown as number) - new Date().setHours(0, 0, 0, 0) === 0)!) + 1}일차</p>
+                        <p className="text-base">오늘 시험 과목: {exam.subjects.find(subj => (new Date(subj.date) as unknown as number) - new Date().setHours(0, 0, 0, 0) === 0)?.subjects.map((x, idx) => `${idx + 1}교시 ${x}`).join(', ') || '없음'}</p>
+                      </>
+                  )
+              }</h1>
+              <br />
+            </div>
+          }
           {posts.map((post, idx) => {
             return (
               <Link key={post.count} href={`/post/${post.count}`}>

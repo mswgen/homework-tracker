@@ -4,6 +4,10 @@ import { formatDistanceStrict, formatDistanceToNowStrict } from "date-fns";
 import { ko } from "date-fns/locale";
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { materialDark } from 'react-syntax-highlighter/dist/cjs/styles/prism'
+import Image from "next/image";
+import Link from "next/link";
 
 import { deadlineName, postType, LSAccount } from "@/app/types";
 
@@ -19,6 +23,31 @@ function Tag({ category, className }: { category: number, className?: string }) 
     )
 }
 
+function ImageModal({ src, children }: { src: string, children: React.ReactNode }) {
+    const [displayed, setDisplayed] = useState(false);
+
+    return (
+        <>
+            <button className="block" onClick={e => setDisplayed(true)}>
+                {children}
+            </button>
+            {displayed &&
+                <button className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-50" onClick={e => setDisplayed(false)}>
+                    <div className="fixed top-[50%] left-[50%] transform translate-x-[-50%] translate-y-[-50%] z-50">
+                        <Link href={src} target="_blank">
+                            {(src.startsWith('/') && !src.startsWith('//'))
+                                ? <Image src={src} alt={src} width={5000} height={5000} className="w-[90vw] max-w-[100vw] max-h-screen" />
+                                // eslint-disable-next-line @next/next/no-img-element
+                                : <img src={src} alt={src} className="w-[90vw] max-w-[100vw] max-h-screen" />
+                            }
+                        </Link>
+                    </div>
+                </button>
+            }
+        </>
+    );
+}
+
 export default function UpdatePost({ params }: { params: { idx: string } }) {
     const router = useRouter();
 
@@ -28,6 +57,7 @@ export default function UpdatePost({ params }: { params: { idx: string } }) {
     const [deadline, setDeadline] = useState('');
     const [content, setContent] = useState('');
     const [errorMsg, setErrorMsg] = useState<string>('');
+    const [preview, setPreview] = useState(false);
 
     const [account, setAccount] = useLocalStorage<LSAccount | null>('account', null);
 
@@ -87,9 +117,60 @@ export default function UpdatePost({ params }: { params: { idx: string } }) {
                 <br />
                 <div>Discord, GitHub 등에서 사용하는 마크다운 문법이 적용됩니다.</div>
                 <br />
-                <textarea cols={64} rows={30} className="resize-none" value={content} onChange={e => {
-                    setContent(e.currentTarget.value);
-                }}></textarea>
+                <input type="checkbox" defaultChecked={false} id="preview" onChange={e => {
+                    setPreview(e.currentTarget.checked);
+                }} />
+                <label htmlFor="preview" className="ml-2">미리보기</label>
+                <br />
+                {preview ?
+                    <div className="border border-slate-400 rounded-lg p-4 dark:bg-[#424242]">
+                        <Markdown remarkPlugins={[remarkGfm]} components={{
+                            // @ts-ignore
+                            code({ node, inline, className, children, ...props }) {
+                                const match = /language-(\w+)/.exec(className || "");
+                                return !inline && match ? (
+                                    // @ts-ignore
+                                    <SyntaxHighlighter
+                                        language={match[1]}
+                                        PreTag="div"
+                                        {...props}
+                                        style={materialDark}
+                                    >
+                                        {String(children).replace(/\n$/, "")}
+                                    </SyntaxHighlighter>
+                                ) : (
+                                    <code {...props}>{children}</code>
+                                );
+                            },
+                            img: (image) => (image.src && image.src.startsWith('/') && !image.src?.startsWith('//')) ? (
+                                <ImageModal src={image.src || ""}>
+                                    <Image
+                                        src={image.src || ""}
+                                        alt={image.alt || ""}
+                                        width={600}
+                                        height={600}
+                                        className="w-[200px] sm:w-[250px] md:w-[300px] lg:w-[400px] xl:w-[500px] 2xl:w-[600px] h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px] xl:h-[500px] 2xl:h-[600px] object-cover"
+                                    />
+                                </ImageModal>
+                            ) : (
+                                <ImageModal src={image.src || ""}>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                        src={image.src || ""}
+                                        alt={image.alt || ""}
+                                        width={600}
+                                        height={600}
+                                        className="w-[200px] sm:w-[250px] md:w-[300px] lg:w-[400px] xl:w-[500px] 2xl:w-[600px] h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px] xl:h-[500px] 2xl:h-[600px] object-cover" />
+                                </ImageModal>
+                            ),
+                            a: (link) => (
+                                <Link href={link.href || ""} rel="noopener noreferrer" target="_blank">{link.children}</Link>
+                            )
+                        }} className="prose dark:prose-invert">{content}</Markdown>
+                    </div>
+                    : <textarea cols={64} rows={30} className="resize-none" value={content} onChange={e => {
+                        setContent(e.currentTarget.value);
+                    }}></textarea>}
             </div>
             <br />
             <button className="mr-[35%] w-[20%] ml-0 pt-3 pb-3 mt-0 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring" onClick={e => {
@@ -114,6 +195,14 @@ export default function UpdatePost({ params }: { params: { idx: string } }) {
                         response.json().then(data => {
                             setContent(content + `${content === '' ? '' : '\n'}` + `${file.type.startsWith('image/') ? '!' : ''}[파일 설명을 입력하세요](${data.path})`)
                         })
+                    } else {
+                        if (response.status === 413) {
+                            setErrorMsg(`${process.env.NEXT_PUBLIC_UPLOAD_LIMIT_MIB}MB 이하의 파일만 업로드할 수 있습니다.`);
+                        } else {
+                            response.json().then(data => {
+                                setErrorMsg(data.msg);
+                            });
+                        }
                     }
                 });
             }} />

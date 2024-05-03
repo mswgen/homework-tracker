@@ -66,7 +66,13 @@ function ImageModal({ src, children }: { src: string, children: React.ReactNode 
             {displayed &&
                 <button className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-50" onClick={e => setDisplayed(false)}>
                     <div className="fixed top-[50%] left-[50%] transform translate-x-[-50%] translate-y-[-50%] z-50">
-                        <Link href={src} target="_blank"><Image src={src} alt={src} width={5000} height={5000} className="w-[90vw] max-w-[100vw] max-h-screen" /></Link>
+                        <Link href={src} target="_blank">
+                            {(src.startsWith('/') && !src.startsWith('//'))
+                                ? <Image src={src} alt={src} width={5000} height={5000} className="w-[90vw] max-w-[100vw] max-h-screen" />
+                                // eslint-disable-next-line @next/next/no-img-element
+                                : <img src={src} alt={src} className="w-[90vw] max-w-[100vw] max-h-screen" />
+                            }
+                        </Link>
                     </div>
                 </button>
             }
@@ -189,7 +195,7 @@ export default function Post({ params }: { params: { idx: string } }) {
                             <code {...props}>{children}</code>
                         );
                     },
-                    img: (image) => (
+                    img: (image) => (image.src && image.src.startsWith('/') && !image.src?.startsWith('//')) ? (
                         <ImageModal src={image.src || ""}>
                             <Image
                                 src={image.src || ""}
@@ -198,6 +204,16 @@ export default function Post({ params }: { params: { idx: string } }) {
                                 height={600}
                                 className="w-[200px] sm:w-[250px] md:w-[300px] lg:w-[400px] xl:w-[500px] 2xl:w-[600px] h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px] xl:h-[500px] 2xl:h-[600px] object-cover"
                             />
+                        </ImageModal>
+                    ) : (
+                        <ImageModal src={image.src || ""}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={image.src || ""}
+                                alt={image.alt || ""}
+                                width={600}
+                                height={600}
+                                className="w-[200px] sm:w-[250px] md:w-[300px] lg:w-[400px] xl:w-[500px] 2xl:w-[600px] h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px] xl:h-[500px] 2xl:h-[600px] object-cover" />
                         </ImageModal>
                     ),
                     a: (link) => (

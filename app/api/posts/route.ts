@@ -34,13 +34,19 @@ export async function GET(request: Request) {
     await Promise.all(posts.filter(post => post.deadline && (new Date(post.deadline) as unknown as number <= (new Date() as unknown as number) - 1000 * 60 * 60 * 15)).map(async post => {
         return postsCollection.deleteOne({ count: post.count });
     }));
+    const examsCollection = db.collection('exams');
+    let exams = await examsCollection.find().toArray();
+    await Promise.all(exams.filter(exam => new Date(exam.subjects.slice(-1)[0].date) as unknown as number <= (new Date() as unknown as number) - 1000 * 60 * 60 * 24).map(async exam => {
+        return examsCollection.deleteOne({ year: exam.year, semester: exam.semester, idx: exam.idx });
+    }));
     client.close();
     posts = posts.filter(post => !post.deadline || (new Date(post.deadline) as unknown as number > (new Date() as unknown as number) - 1000 * 60 * 60 * 15));
     const sortedPosts = posts.filter(post => post.type === 0).filter(post => post.deadline != null).sort((a, b) => (new Date(a.deadline) as unknown as number) - (new Date(b.deadline) as unknown as number))
         .concat(posts.filter(post => post.type === 0).filter(post => post.deadline == null).reverse())
         .concat(posts.filter(post => post.type > 0).filter(post => post.deadline != null).sort((a, b) => a.deadline === b.deadline ? a.type - b.type : (new Date(a.deadline) as unknown as number) - (new Date(b.deadline) as unknown as number)))
         .concat(posts.filter(post => post.type > 0).filter(post => post.deadline == null).sort((a, b) => a.type - b.type));
-    return new Response(JSON.stringify(sortedPosts.map(x => { return { count: x.count, title: x.title, type: x.type, deadline: x.deadline }; })), { status: 200 });
+    const currentExam = exams.filter(exam => new Date(exam.subjects.slice(-1)[0].date) as unknown as number > (new Date() as unknown as number) - 1000 * 60 * 60 * 24).sort((a, b) => (new Date(a.subjects[0].date) as unknown as number) - (new Date(b.subjects[0].date) as unknown as number))[0];
+    return new Response(JSON.stringify({ posts: sortedPosts.map(x => { return { count: x.count, title: x.title, type: x.type, deadline: x.deadline }; }), exam: currentExam }), { status: 200 });
 }
 
 export async function POST(request: Request) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cache-v15';
+const CACHE_NAME = 'cache-v16';
 
 self.addEventListener('install', event => {
     self.skipWaiting();
@@ -120,7 +120,7 @@ self.addEventListener('push', event => {
     body.forEach(data => {
         self.registration.showNotification(data.title, {
             body: data.body,
-            tag: data.title === '계정 생성됨' ? `account/${data.tag}` : `post/${data.tag}`,
+            tag: data.title === '계정 생성됨' ? `/account/${data.tag}` : (data.tag === 'exam' ? '/' : `/post/${data.tag}`),
             icon: '/icon3.png',
             badge: '/pushicon.png'
         });

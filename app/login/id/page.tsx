@@ -21,6 +21,7 @@ export default function LoginPhase1() {
     const [errorCnt, setErrorCnt] = useState(0);
     const [isOffline, setIsOffline] = useState(false);
     const [justLoggedIn, setJustLoggedIn] = useState(false);
+    const [passkeySuccess, setPasskeySuccess] = useState(false);
 
     const [account, setAccount] = useLocalStorage<LSAccount | null>('account', null);
 
@@ -40,6 +41,7 @@ export default function LoginPhase1() {
                             .then(res => {
                                 if (res.ok) {
                                     res.json().then(res => {
+                                        setPasskeySuccess(true);
                                         setErrorMsg('');
                                         setJustLoggedIn(true);
                                         setAccount({ id: res.id, token: res.token });
@@ -47,6 +49,7 @@ export default function LoginPhase1() {
                                     });
                                 } else {
                                     res.json().then(res => {
+                                        setPasskeySuccess(false);
                                         setErrorMsg(res.msg);
                                         setErrorCnt(errorCnt + 1);
                                     });
@@ -93,6 +96,7 @@ export default function LoginPhase1() {
                 fetch('/api/check_id?id=' + encodeURIComponent(id)).then(async res => {
                     if (res.ok) {
                         setLoginFailed(false);
+                        if (passkeySuccess) return;
                         setAccount({ id });
                         router.push('/login/password');
                     } else {
@@ -108,7 +112,8 @@ export default function LoginPhase1() {
                     setLoginFailed(false);
                 }} />
                 {errorMsg === '' ? <><br /><br /></> : <p className="text-red-500">{errorMsg}</p>}
-                {loginFailed ? <p className="text-red-500">입력한 ID는 존재하지 않습니다.</p> : <><br /><br /></>}
+                {loginFailed ? <p className="text-red-500">입력한 ID는 존재하지 않습니다.</p> : <br />}
+                <br />
                 <br />
                 <br />
                 <Link href="/register">
