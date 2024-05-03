@@ -58,6 +58,7 @@ export default function UpdatePost({ params }: { params: { idx: string } }) {
     const [content, setContent] = useState('');
     const [errorMsg, setErrorMsg] = useState<string>('');
     const [preview, setPreview] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
     const [account, setAccount] = useLocalStorage<LSAccount | null>('account', null);
 
@@ -117,7 +118,7 @@ export default function UpdatePost({ params }: { params: { idx: string } }) {
                 <br />
                 <div>Discord, GitHub 등에서 사용하는 마크다운 문법이 적용됩니다.</div>
                 <br />
-                <input type="checkbox" defaultChecked={false} id="preview" onChange={e => {
+                <input type="checkbox" defaultChecked={false} id="preview" className="mr-2 h-4 w-4" onChange={e => {
                     setPreview(e.currentTarget.checked);
                 }} />
                 <label htmlFor="preview" className="ml-2">미리보기</label>
@@ -173,10 +174,11 @@ export default function UpdatePost({ params }: { params: { idx: string } }) {
                     }}></textarea>}
             </div>
             <br />
-            <button className="mr-[35%] w-[20%] ml-0 pt-3 pb-3 mt-0 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring" onClick={e => {
+            <button className="mr-[35%] w-[20%] ml-0 pt-3 pb-3 mt-0 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring" disabled={isUploading} onClick={e => {
                 e.preventDefault();
+                setIsUploading(true);
                 document.getElementById('upload')?.click();
-            }}>파일 업로드</button>
+            }}>{isUploading ? '업로드 중' : '파일 업로드'}</button>
             <input type="file" className="hidden" id="upload" onChange={e => {
                 e.preventDefault();
                 const target = e.currentTarget;
@@ -191,6 +193,8 @@ export default function UpdatePost({ params }: { params: { idx: string } }) {
                     },
                     body: formData
                 }).then(response => {
+                    setIsUploading(false);
+                    e.target.value = '';
                     if (response.ok) {
                         response.json().then(data => {
                             setContent(content + `${content === '' ? '' : '\n'}` + `${file.type.startsWith('image/') ? '!' : ''}[파일 설명을 입력하세요](${data.path})`)

@@ -110,7 +110,7 @@ export default function WritePost() {
                 <br />
                 <div>Discord, GitHub 등에서 사용하는 마크다운 문법이 적용됩니다.</div>
                 <br />
-                <input type="checkbox" defaultChecked={false} id="preview" onChange={e => {
+                <input type="checkbox" defaultChecked={false} id="preview" className="mr-2 h-4 w-4" onChange={e => {
                     setPreview(e.currentTarget.checked);
                 }} />
                 <label htmlFor="preview" className="ml-2">미리보기</label>
@@ -186,6 +186,7 @@ export default function WritePost() {
                     body: formData
                 }).then(response => {
                     setIsUploading(false);
+                    e.target.value = '';
                     if (response.ok) {
                         response.json().then(data => {
                             setContent(content + `${content === '' ? '' : '\n'}` + `${file.type.startsWith('image/') ? '!' : ''}[파일 설명을 입력하세요](${data.path})`)
