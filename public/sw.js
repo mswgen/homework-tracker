@@ -1,4 +1,5 @@
-const CACHE_NAME = 'cache-v17';
+const CACHE_NAME = 'cache-v19';
+const UPLOAD_PERMANENT_CACHE_NAME = 'upload-cache';
 
 self.addEventListener('install', event => {
     self.skipWaiting();
@@ -9,7 +10,7 @@ self.addEventListener('activate', event => {
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames
-                    .filter(cacheName => cacheName !== CACHE_NAME)
+                    .filter(cacheName => cacheName !== CACHE_NAME && cacheName !== UPLOAD_PERMANENT_CACHE_NAME)
                     .map(cacheName => {
                         return caches.open(cacheName).then(cache => {
                             return cache.keys().then(keys => {
@@ -71,44 +72,57 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
     event.respondWith(
-        event.request.url.includes('/api') ?
-            (
-                (event.request.url.includes('/api/post') && event.request.method === 'GET') ? (
-                    fetch(event.request)
-                        .then(response => {
-                            if (!response.ok) return response;
-                            return caches.open(CACHE_NAME).then(cache => {
-                                cache.put(event.request, response.clone());
-                                return response;
-                            });
+        (event.request.url.includes('/upload/') && event.request.method === 'GET')
+            ? caches.open(UPLOAD_PERMANENT_CACHE_NAME).then(cache => {
+                return cache.match(event.request).then(response => {
+                    return (
+                        response ||
+                        fetch(event.request).then(response => {
+                            if (response.ok) cache.put(event.request, response.clone());
+                            return response;
                         })
-                        .catch(() => {
-                            return caches.open(CACHE_NAME).then(cache => {
-                                return cache.match(event.request).then(response => {
-                                    const newHeaders = new Headers(response.headers);
-                                    newHeaders.append('X-Is-Cache', 'true');
-                                    return new Response(response.body, {
-                                        status: response.status,
-                                        statusText: response.statusText,
-                                        headers: newHeaders
+                    );
+                });
+            }) : (
+                event.request.url.includes('/api') ?
+                    (
+                        (event.request.url.includes('/api/post') && event.request.method === 'GET') ? (
+                            fetch(event.request)
+                                .then(response => {
+                                    if (!response.ok) return response;
+                                    return caches.open(CACHE_NAME).then(cache => {
+                                        cache.put(event.request, response.clone());
+                                        return response;
                                     });
-                                }).catch(() => {
-                                    return fetch(event.request);
                                 })
-                            });
-                        })
-                ) : fetch(event.request)
-            )
-            : caches.open(CACHE_NAME).then(async cache => {
-                const cacheResponse = await cache.match(event.request);
-                return (
-                    cacheResponse ||
-                    fetch(event.request).then(response => {
-                        if (response.ok) cache.put(event.request, response.clone());
-                        return response;
+                                .catch(() => {
+                                    return caches.open(CACHE_NAME).then(cache => {
+                                        return cache.match(event.request).then(response => {
+                                            const newHeaders = new Headers(response.headers);
+                                            newHeaders.append('X-Is-Cache', 'true');
+                                            return new Response(response.body, {
+                                                status: response.status,
+                                                statusText: response.statusText,
+                                                headers: newHeaders
+                                            });
+                                        }).catch(() => {
+                                            return fetch(event.request);
+                                        })
+                                    });
+                                })
+                        ) : fetch(event.request)
+                    )
+                    : caches.open(CACHE_NAME).then(async cache => {
+                        const cacheResponse = await cache.match(event.request);
+                        return (
+                            cacheResponse ||
+                            fetch(event.request).then(response => {
+                                if (response.ok) cache.put(event.request, response.clone());
+                                return response;
+                            })
+                        );
                     })
-                );
-            })
+            )
     );
 });
 

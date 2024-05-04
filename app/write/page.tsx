@@ -36,9 +36,9 @@ function ImageModal({ src, children }: { src: string, children: React.ReactNode 
                     <div className="fixed top-[50%] left-[50%] transform translate-x-[-50%] translate-y-[-50%] z-50">
                         <Link href={src} target="_blank">
                             {(src.startsWith('/') && !src.startsWith('//'))
-                                ? <Image src={src} alt={src} width={5000} height={5000} className="w-[90vw] max-w-[100vw] max-h-screen" />
+                                ? <Image src={src} alt={src} width={5000} height={5000} className="w-auto max-w-[90vw] max-h-screen" />
                                 // eslint-disable-next-line @next/next/no-img-element
-                                : <img src={src} alt={src} className="w-[90vw] max-w-[100vw] max-h-screen" />
+                                : <img src={src} alt={src} className="w-auto max-w-[90vw] max-h-screen" />
                             }
                         </Link>
                     </div>
