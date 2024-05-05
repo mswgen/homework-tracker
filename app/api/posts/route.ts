@@ -40,9 +40,9 @@ export async function GET(request: Request) {
         return examsCollection.deleteOne({ year: exam.year, semester: exam.semester, idx: exam.idx });
     }));
     client.close();
-    posts = posts.filter(post => !post.deadline || (new Date(post.deadline) as unknown as number > (new Date() as unknown as number) - 1000 * 60 * 60 * 15));
+    posts = posts.filter(post => !post.deadline || (new Date(post.deadline) as unknown as number > (new Date() as unknown as number) - 1000 * 60 * 60 * 15)).reverse();
     const sortedPosts = posts.filter(post => post.type === 0).filter(post => post.deadline != null).sort((a, b) => (new Date(a.deadline) as unknown as number) - (new Date(b.deadline) as unknown as number))
-        .concat(posts.filter(post => post.type === 0).filter(post => post.deadline == null).reverse())
+        .concat(posts.filter(post => post.type === 0).filter(post => post.deadline == null))
         .concat(posts.filter(post => post.type > 0).filter(post => post.deadline != null).sort((a, b) => a.deadline === b.deadline ? a.type - b.type : (new Date(a.deadline) as unknown as number) - (new Date(b.deadline) as unknown as number)))
         .concat(posts.filter(post => post.type > 0).filter(post => post.deadline == null).sort((a, b) => a.type - b.type));
     const currentExam = exams.filter(exam => new Date(exam.subjects.slice(-1)[0].date) as unknown as number > (new Date() as unknown as number) - 1000 * 60 * 60 * 24).sort((a, b) => (new Date(a.subjects[0].date) as unknown as number) - (new Date(b.subjects[0].date) as unknown as number))[0];
