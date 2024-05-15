@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cache-v20';
+const CACHE_NAME = 'cache-v21';
 const UPLOAD_PERMANENT_CACHE_NAME = 'upload-cache';
 
 self.addEventListener('install', event => {
@@ -72,7 +72,7 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
     event.respondWith(
-        (event.request.url.includes('/upload/') && event.request.method === 'GET')
+        ((event.request.url.includes('/upload/') || event.request.url.includes('/image/')) && event.request.method === 'GET')
             ? caches.open(UPLOAD_PERMANENT_CACHE_NAME).then(cache => {
                 return cache.match(event.request).then(response => {
                     return (

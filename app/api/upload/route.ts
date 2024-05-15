@@ -1,6 +1,7 @@
 import { MongoClient } from "mongodb";
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { lookup } from 'mime-types';
 const crypto = globalThis.crypto;
 
 export const dynamic = 'force-dynamic';
@@ -46,15 +47,16 @@ export async function POST(request: Request) {
     }
     const fileArrayBuffer = await file.arrayBuffer();
     const hash = Buffer.from(await crypto.subtle.digest('SHA-1', fileArrayBuffer)).toString('hex');
+    const fileDir = (lookup(file.name) || '').startsWith('image') ? './upload/image' : './upload';
     try {
-        await fs.stat('./upload');
+        await fs.stat(fileDir);
     } catch {
-        await fs.mkdir('./upload');
+        await fs.mkdir(fileDir);
     }
-    const filePath = await fs.readdir('./upload').then(files => files.find(fileName => fileName.includes(hash)));
+    const filePath = await fs.readdir(fileDir).then(files => files.find(fileName => fileName.includes(hash)));
     if (!filePath) {
-        await fs.writeFile(`./upload/${hash}${path.parse(file.name).ext}`, Buffer.from(fileArrayBuffer));
+        await fs.writeFile(`${fileDir}/${hash}${path.parse(file.name).ext}`, Buffer.from(fileArrayBuffer));
     }
     client.close();
-    return new Response(JSON.stringify({ code: 0, path: `/upload/${filePath ?? `${hash}${path.parse(file.name).ext}`}` }), { status: 200 });
+    return new Response(JSON.stringify({ code: 0, path: `/${fileDir.split('/').reverse()[0]}/${filePath ?? `${hash}${path.parse(file.name).ext}`}` }), { status: 200 });
 }

@@ -92,15 +92,15 @@ export async function PUT(request: Request, { params }: { params: { idx: string 
     await postsCollection.updateOne({ count: parseInt(params.idx) }, { $set: { title: data.title, type: data.type, content: data.content, deadline: data.deadline ? new Date(data.deadline) : null, author: userData.id, created: new Date() } });
     const userList = await usersCollection.find({ id: { $ne: userData.id } }).toArray();
     setVapidDetails(`mailto:${process.env.VAPID_EMAIL!}`, process.env.NEXT_PUBLIC_VAPID_PUBKEY!, process.env.VAPID_PRIVKEY!);
-    userList.forEach(user => {
-        user.subscriptions.forEach(async (sub: any) => {
-            sendNotification(sub, JSON.stringify([{
-                title: `${postType[data.type]} 공지 수정됨`,
-                body: `${data.title}이(가) 수정되었습니다.`,
-                tag: params.idx
-            }])).catch(() => { });
-        });
-    });
+    // userList.forEach(user => {
+    //     user.subscriptions.forEach(async (sub: any) => {
+    //         sendNotification(sub, JSON.stringify([{
+    //             title: `${postType[data.type]} 공지 수정됨`,
+    //             body: `${data.title}이(가) 수정되었습니다.`,
+    //             tag: params.idx
+    //         }])).catch(() => { });
+    //     });
+    // });
     client.close();
     return new Response(JSON.stringify({ code: 0 }), { status: 200 });
 }
