@@ -167,6 +167,43 @@ export default function Home() {
           }
           <br />
           <br />
+          <button className="w-1/2 border-r border-r-slate-400 text-center" onClick={(() => {
+            fetch('/api/timetable').then(r => {
+              if (r.status === 500) {
+                setDialogTitle('컴시간 설정 필요');
+                setDialogType('alert');
+                setDialogContent('서버에서 컴시간을 설정하지 않았습니다.\n관리자에게 문의하세요.');
+                setDialogOpen(true);
+              } else if (r.ok) {
+                r.json().then(data => {
+                  const todayTimetable = data.data.timetable[new Date().getDay() - 1].filter((x: any) => x.subject !== '');
+                  setDialogTitle('시간표');
+                  setDialogType('alert');
+                  setDialogContent(todayTimetable.map((x: { subject: string, teacher: string, prevData?: { subject: string, teacher: string } }, idx: number) => `${idx + 1}교시: ${x.subject}(${x.teacher} 교사)${x.prevData ? ` (변경 전: ${x.prevData.subject === '' ? '수업 없음' : `${x.prevData.subject}(${x.prevData.teacher} 교사)`})` : ''}`).join('\n'));
+                  setDialogOpen(true);
+                });
+              }
+            })
+          })}>시간표</button>
+          <button className="w-1/2 text-center" onClick={(() => {
+            fetch('/api/meal').then(r => {
+              if (r.status === 500) {
+                setDialogTitle('급식 정보 설정 필요');
+                setDialogType('alert');
+                setDialogContent('서버에서 급식 정보를 설정하지 않았습니다.\n관리자에게 문의하세요.');
+                setDialogOpen(true);
+              } else if (r.ok) {
+                r.json().then(data => {
+                  setDialogTitle('식단표');
+                  setDialogType('alert');
+                  setDialogContent(data.data.meals.join('\n') + '\n\n열량: ' + data.data.calories + 'Kcal');
+                  setDialogOpen(true);
+                });
+              }
+            })
+          })}>급식</button>
+          <br />
+          <br />
           {exam &&
             <div className="border-t border-t-slate-400">
               <br />
