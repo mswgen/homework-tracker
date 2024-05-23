@@ -25,7 +25,8 @@ export async function GET(request: Request) {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 perm: user.perm,
-                accepted: user.accepted
+                accepted: user.accepted,
+                allergy: user.allergy
             }
         }), { status: 200 });
     }
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
         client.close();
         return new Response(JSON.stringify({ code: 1, msg: '이미 존재하는 ID입니다.' }), { status: 400 });
     }
-    await usersCollection.insertOne({ id, pwd: hash, salt, firstName: '', lastName: '', perm: 2, accepted: false, passkeys: [], subscriptions: [] });
+    await usersCollection.insertOne({ id, pwd: hash, salt, firstName: '', lastName: '', perm: 2, accepted: false, passkeys: [], subscriptions: [], allergy: [] });
     let token = '';
     for (let i = 0; i < 64; i++) {
         token += Math.floor(Math.random() * 16).toString(16);
@@ -88,7 +89,7 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-    const { id, pwd, firstName, lastName, perm, accepted } = await request.json();
+    const { id, pwd, firstName, lastName, perm, accepted, allergy } = await request.json();
     const token = request.headers.get('Authorization');
     if (!token) {
         return new Response(JSON.stringify({ code: 1, msg: '로그인이 필요합니다.' }), { status: 401 });
@@ -120,9 +121,9 @@ export async function PUT(request: Request) {
                     return new Response(JSON.stringify({ code: 1, msg: '이름, 승인 여부, 권한을 수정하려면 root 권한이 필요합니다.' }), { status: 403 });
                 }
             } else {
-                if (perm != null || pwd != null) {
+                if (perm != null || pwd != null || allergy != null) {
                     client.close();
-                    return new Response(JSON.stringify({ code: 1, msg: '권한 또는 비밀번호를 수정하려면 root 권한이 필요합니다.' }), { status: 403 });
+                    return new Response(JSON.stringify({ code: 1, msg: '권한, 비밀번호, 또는 알러지 정보를 수정하려면 root 권한이 필요합니다.' }), { status: 403 });
                 }
             }
             break;
@@ -151,7 +152,7 @@ export async function PUT(request: Request) {
             client.close();
             return new Response(JSON.stringify({ code: 1, msg: '관리자 이상의 권한을 가진 사용자의 정보를 수정하려면 root 권한이 필요합니다.' }), { status: 403 });
         }
-        if ((pwd && typeof pwd !== 'string') || (firstName && typeof firstName !== 'string') || (lastName && typeof lastName !== 'string') || (perm != null && typeof perm !== 'number') || (accepted != null && typeof accepted !== 'boolean')) {
+        if ((pwd && typeof pwd !== 'string') || (firstName && typeof firstName !== 'string') || (lastName && typeof lastName !== 'string') || (perm != null && typeof perm !== 'number') || (accepted != null && typeof accepted !== 'boolean') || (allergy && !Array.isArray(allergy))) {
             client.close();
             return new Response(JSON.stringify({ code: 1, msg: '입력한 정보가 올바르지 않습니다.' }), { status: 400 });
         }
@@ -185,6 +186,9 @@ export async function PUT(request: Request) {
         }
         if (accepted != null && typeof accepted === 'boolean') {
             Object.assign(updateList.$set, { accepted });
+        }
+        if (allergy != null && Array.isArray(allergy)) {
+            Object.assign(updateList.$set, { allergy });
         }
         await usersCollection.updateOne({ id }, updateList);
         client.close();

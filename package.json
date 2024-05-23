@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "build-push": "tsc -t esnext -m nodenext --moduleResolution nodenext --outDir pushdist sendpush.mts app/types.ts"
+    "build-push": "tsc -t esnext -m nodenext --moduleResolution nodenext --outDir pushdist sendpus*.mts app/types.ts"
   },
   "dependencies": {
     "@simplewebauthn/browser": "^10.0.0",

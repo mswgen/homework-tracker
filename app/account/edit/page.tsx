@@ -17,6 +17,7 @@ export default function MyAccountEditpage() {
     const [pwd, setPwd] = useState('');
     const [perm, setPerm] = useState(2);
     const [isAccepted, setIsAccepted] = useState(false);
+    const [allergy, setAllergy] = useState<Array<number>>([]);
     const [saveState, setSaveState] = useState('');
     const [saveErrorMsg, setSaveErrorMsg] = useState('');
     const [isOffline, setIsOffline] = useState(false);
@@ -36,6 +37,7 @@ export default function MyAccountEditpage() {
                     setLastName(data.lastName);
                     setPerm(data.perm);
                     setIsAccepted(data.accepted || false);
+                    setAllergy(data.allergy || []);
                 } else {
                     setAccount(null);
                     router.replace('/login/id');
@@ -227,6 +229,41 @@ export default function MyAccountEditpage() {
                     });
                 }} />
                 <span className="text-xl">{isAccepted ? '승인됨' : '승인되지 않음'}</span>
+                <br />
+                <br />
+                <span>알러지 정보</span>
+                <br />
+                {
+                    ['난류', '우유', '메밀', '땅콩', '대두', '밀', '고등어', '게', '새우', '돼지고기', '복숭아', '토마토', '아황산류', '호두', '닭고기', '쇠고기', '오징어', '조개류', '잣'].map((i, idx) => {
+                        return (
+                            <div key={idx} className="grid grid-cols-[auto_1fr]">
+                                <input type="checkbox" id={`allergy${idx + 1}`} className="mr-2 h-5 mt-1 mb-1" checked={allergy.includes(idx + 1)} onChange={e => {
+                                    setAllergy(allergy.filter(i => i !== idx + 1).concat(e.currentTarget.checked ? idx + 1 : []));
+                                    setSaveState('저장 중');
+                                    fetch('/api/account', {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json', Authorization: account!.token! },
+                                        body: JSON.stringify({
+                                            id: account?.id,
+                                            allergy: allergy.filter(i => i !== idx + 1).concat(e.currentTarget.checked ? idx + 1 : [])
+                                        })
+                                    }).then(async res => {
+                                        if (res.ok) {
+                                            setSaveState('저장됨');
+                                        } else {
+                                            setSaveState('저장 실패');
+                                            setSaveErrorMsg((await res.json()).msg);
+                                        }
+                                    }).catch(() => {
+                                        setSaveState('저장 실패');
+                                        setSaveErrorMsg('오프라인 상태');
+                                    });
+                                }} />
+                                <label htmlFor={`allergy${idx + 1}`}>{i}</label>
+                            </div>
+                        );
+                    })
+                }
             </div>
         </>
     );

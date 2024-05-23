@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cache-v22';
+const CACHE_NAME = 'cache-v23';
 const UPLOAD_PERMANENT_CACHE_NAME = 'upload-cache';
 
 self.addEventListener('install', event => {
@@ -134,7 +134,7 @@ self.addEventListener('push', event => {
     body.forEach(data => {
         self.registration.showNotification(data.title, {
             body: data.body,
-            tag: data.title === '계정 생성됨' ? `/account/${data.tag}` : (data.tag === 'exam' ? '/' : `/post/${data.tag}`),
+            tag: data.title === '급식 알러지 알림' ? '/' : (data.title === '계정 생성됨' ? `/account/${data.tag}` : (data.tag === 'exam' ? '/' : `/post/${data.tag}`)),
             icon: '/icon3.png',
             badge: '/pushicon.png'
         });

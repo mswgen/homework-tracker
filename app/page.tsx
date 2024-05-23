@@ -15,6 +15,7 @@ export default function Home() {
   const [isClient, setIsClient] = useState<boolean>(false);
   const [posts, setPosts] = useState<Array<{ count: number, title: string, type: number, deadline?: Date }>>([]);
   const [exam, setExam] = useState<{ year: number, semester: 1 | 2, idx: 1 | 2, subjects: Array<{ date: string, subjects: Array<string> }> } | null>(null);
+  const [allergy, setAllergy] = useState<Array<number>>([]);
   const [canView, setCanView] = useState<boolean>(true);
   const [isPWA, setIsPWA] = useState<boolean>(false);
   const [dialogTtile, setDialogTitle] = useState<string>('');
@@ -56,6 +57,16 @@ export default function Home() {
       }
     })
   }, [account, setAccount, setNotification]);
+  useEffect(() => {
+    if (!isClient) return;
+    if (account && account.id && account.token) {
+        fetch('/api/account?id=' + account.id).then(async res => {
+            if (res.ok) {
+                setAllergy((await res.json()).data.allergy);
+              }
+        })
+    }
+}, [account, isClient]);
   useEffect(() => {
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsPWA(true);
@@ -196,7 +207,9 @@ export default function Home() {
                 r.json().then(data => {
                   setDialogTitle('식단표');
                   setDialogType('alert');
-                  setDialogContent(data.data.meals.join('\n') + '\n\n열량: ' + data.data.calories + 'Kcal');
+                  setDialogContent(data.data.meals.map(
+                    (x: string) => x.split(' ').reverse()[0].replace('(', '').replace(')', '').split('.').map((y: string) => Number(y.trim())).some((y: number) => allergy.includes(y)) ? `${x} (알러지 있음)` : x
+                  ).join('\n') + '\n\n열량: ' + data.data.calories + 'Kcal');
                   setDialogOpen(true);
                 });
               }
