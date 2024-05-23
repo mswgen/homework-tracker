@@ -22,53 +22,10 @@ export default function LoginPhase1() {
     const [isOffline, setIsOffline] = useState(false);
     const [justLoggedIn, setJustLoggedIn] = useState(false);
     const [passkeySuccess, setPasskeySuccess] = useState(false);
+    const [showTraditional, setShowTraditional] = useState(false);
 
     const [account, setAccount] = useLocalStorage<LSAccount | null>('account', null);
 
-    useEffect(() => {
-        if ((/iPhone|iPad/.test(navigator.userAgent) || (/Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints && navigator.maxTouchPoints > 1)) && window.PublicKeyCredential &&
-            PublicKeyCredential.isConditionalMediationAvailable) {
-            PublicKeyCredential.isConditionalMediationAvailable().then(result => {
-                if (result) router.replace('/login/passkey');
-            });
-        }
-    }, [router]);
-    useEffect(() => {
-        fetch('/api/passkey/login/prepare')
-            .then(res => res.json())
-            .then((data) => {
-                startAuthentication(data.options, true)
-                    .then(authResp => {
-                        fetch('/api/passkey/login', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ session: data.session, response: authResp })
-                        })
-                            .then(res => {
-                                if (res.ok) {
-                                    res.json().then(res => {
-                                        setPasskeySuccess(true);
-                                        setErrorMsg('');
-                                        setJustLoggedIn(true);
-                                        setAccount({ id: res.id, token: res.token });
-                                        router.push('/');
-                                    });
-                                } else {
-                                    res.json().then(res => {
-                                        setPasskeySuccess(false);
-                                        setErrorMsg(res.msg);
-                                        setErrorCnt(errorCnt + 1);
-                                    });
-                                }
-                            })
-                    })
-                    .catch(err => { });
-            }).catch(() => {
-                setIsOffline(true);
-            })
-    }, [router, setAccount, errorCnt]);
     useEffect(() => {
         if (isOffline) {
             const interval = setInterval(() => {
@@ -81,6 +38,14 @@ export default function LoginPhase1() {
             return () => clearInterval(interval);
         }
     }, [isOffline]);
+    useEffect(() => {
+        if (window.PublicKeyCredential &&
+            PublicKeyCredential.isConditionalMediationAvailable) {
+            PublicKeyCredential.isConditionalMediationAvailable().then(result => {
+                if (!result) router.replace('/login/id');
+            });
+        }
+    }, [router]);
     useEffect(() => {
         document.documentElement.style.setProperty("--viewport-width", ((document.querySelector('main') as HTMLElement).clientWidth / 9 * 10).toString());
         return () => document.documentElement.style.setProperty("--viewport-width", "100vw");
@@ -98,7 +63,49 @@ export default function LoginPhase1() {
         <div>
             <h1 className="text-3xl">로그인</h1>
             <br />
-            <form onSubmit={e => {
+            <button className="w-[60%] ml-[20%] mr-[20%] pt-3 pb-3 mt-8 mb-16 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring" onClick={(e) => {
+                fetch('/api/passkey/login/prepare')
+                    .then(res => res.json())
+                    .then((data) => {
+                        startAuthentication(data.options)
+                            .then(authResp => {
+                                fetch('/api/passkey/login', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ session: data.session, response: authResp })
+                                })
+                                    .then(res => {
+                                        if (res.ok) {
+                                            res.json().then(res => {
+                                                setPasskeySuccess(true);
+                                                setErrorMsg('');
+                                                setJustLoggedIn(true);
+                                                setAccount({ id: res.id, token: res.token });
+                                                router.push('/');
+                                            });
+                                        } else {
+                                            res.json().then(res => {
+                                                setPasskeySuccess(false);
+                                                setErrorMsg(res.msg);
+                                                setErrorCnt(errorCnt + 1);
+                                            });
+                                        }
+                                    })
+                            })
+                            .catch(() => {
+                                setErrorCnt(errorCnt + 1);
+                            });
+                    }).catch(() => {
+                        setIsOffline(true);
+                    })
+            }}>패스키로 로그인</button>
+            {errorMsg === '' ? <><br /><br /></> : <p className="text-red-500">{errorMsg}</p>}
+            <button className={`w-full ml-auto mr-auto pb-8 ${errorCnt > 0 ? 'block' : 'hidden'}`} onClick={(e) => {
+                setShowTraditional(!showTraditional);
+            }}>비밀번호로 로그인</button>
+            <form className={`border-t-slate-300 border-t pt-8 ${showTraditional ? 'block' : 'hidden'}`} onSubmit={e => {
                 e.preventDefault();
                 setLoggingIn(true);
                 fetch('/api/check_id?id=' + encodeURIComponent(id)).then(async res => {
@@ -119,7 +126,6 @@ export default function LoginPhase1() {
                     setId(e.currentTarget.value);
                     setLoginFailed(false);
                 }} />
-                {errorMsg === '' ? <><br /><br /></> : <p className="text-red-500">{errorMsg}</p>}
                 {loginFailed ? <p className="text-red-500">입력한 ID는 존재하지 않습니다.</p> : <br />}
                 <br />
                 <br />
