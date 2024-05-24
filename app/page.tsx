@@ -187,7 +187,14 @@ export default function Home() {
                 setDialogOpen(true);
               } else if (r.ok) {
                 r.json().then(data => {
-                  const todayTimetable = data.data.timetable[new Date().getDay() - 1].filter((x: any) => x.subject !== '');
+                  const todayTimetable = (data.data.timetable[new Date().getDay() - 1] ?? []).filter((x: any) => x.subject !== '');
+                  if (todayTimetable.length === 0) {
+                    setDialogTitle('수업 없음');
+                    setDialogType('alert');
+                    setDialogContent('오늘은 수업이 없습니다.');
+                    setDialogOpen(true);
+                    return;
+                  }
                   setDialogTitle('시간표');
                   setDialogType('alert');
                   setDialogContent(todayTimetable.map((x: { subject: string, teacher: string, prevData?: { subject: string, teacher: string } }, idx: number) => `${idx + 1}교시: ${x.subject}(${x.teacher} 교사)${x.prevData ? ` (변경 전: ${x.prevData.subject === '' ? '수업 없음' : `${x.prevData.subject}(${x.prevData.teacher} 교사)`})` : ''}`).join('\n'));
@@ -212,6 +219,11 @@ export default function Home() {
                   ).join('\n') + '\n\n열량: ' + data.data.calories + 'Kcal');
                   setDialogOpen(true);
                 });
+              } else {
+                setDialogTitle('급식 정보 없음');
+                  setDialogType('alert');
+                  setDialogContent('오늘의 급식 정보를 가져올 수 없습니다.');
+                  setDialogOpen(true);
               }
             })
           })}>급식</button>
