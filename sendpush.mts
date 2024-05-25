@@ -46,8 +46,9 @@ if (closestExam) {
         });
     }
 }
+const csatCollection = db.collection('csat');
 // @ts-ignore
-const allCsats = await examsCollection.find().toArray();
+const allCsats = await csatCollection.find().toArray();
 const closestCsat = allCsats.filter(csat => (new Date(csat.date) as unknown as number) > Date.now() - 24 * 60 * 60 * 1000).sort((a, b) => (new Date(a.date) as unknown as number) - (new Date(b.date) as unknown as number))[0];
 if (closestCsat) {
     const data = {
