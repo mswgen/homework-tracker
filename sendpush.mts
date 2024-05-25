@@ -46,6 +46,21 @@ if (closestExam) {
         });
     }
 }
+// @ts-ignore
+const allCsats = await examsCollection.find().toArray();
+const closestCsat = allCsats.filter(csat => (new Date(csat.date) as unknown as number) > Date.now() - 24 * 60 * 60 * 1000).sort((a, b) => (new Date(a.date) as unknown as number) - (new Date(b.date) as unknown as number))[0];
+if (closestCsat) {
+    const data = {
+        title: `수능/모평/학평 1일 전`,
+        body: `${closestCsat.year}년 ${closestCsat.month}월 ${closestCsat.type} 1일 전입니다.`,
+        tag: 'csat'
+    };
+    userList.forEach(user => {
+        user.subscriptions.forEach(async (sub: any) => {
+            sendNotification(sub, JSON.stringify([data])).catch(() => { })
+        });
+    });
+}
 const data = twoDaysLeft.map(post => {
     return {
         title: `${postType[post.type]} ${deadlineName[post.type]} 2일 전`,
