@@ -15,6 +15,7 @@ export default function Home() {
   const [isClient, setIsClient] = useState<boolean>(false);
   const [posts, setPosts] = useState<Array<{ count: number, title: string, type: number, deadline?: Date }>>([]);
   const [exam, setExam] = useState<{ year: number, semester: 1 | 2, idx: 1 | 2, subjects: Array<{ date: string, subjects: Array<string> }> } | null>(null);
+  const [csat, setCsat] = useState<{ year: number, month: number, date: string, type: string } | null>(null);
   const [allergy, setAllergy] = useState<Array<number>>([]);
   const [canView, setCanView] = useState<boolean>(true);
   const [isPWA, setIsPWA] = useState<boolean>(false);
@@ -53,6 +54,7 @@ export default function Home() {
         response.json().then(data => {
           setPosts(data.posts);
           setExam(data.exam);
+          setCsat(data.csat);
         });
       }
     })
@@ -60,13 +62,13 @@ export default function Home() {
   useEffect(() => {
     if (!isClient) return;
     if (account && account.id && account.token) {
-        fetch('/api/account?id=' + account.id).then(async res => {
-            if (res.ok) {
-                setAllergy((await res.json()).data.allergy);
-              }
-        })
+      fetch('/api/account?id=' + account.id).then(async res => {
+        if (res.ok) {
+          setAllergy((await res.json()).data.allergy);
+        }
+      })
     }
-}, [account, isClient]);
+  }, [account, isClient]);
   useEffect(() => {
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsPWA(true);
@@ -221,34 +223,50 @@ export default function Home() {
                 });
               } else {
                 setDialogTitle('급식 정보 없음');
-                  setDialogType('alert');
-                  setDialogContent('오늘의 급식 정보를 가져올 수 없습니다.');
-                  setDialogOpen(true);
+                setDialogType('alert');
+                setDialogContent('오늘의 급식 정보를 가져올 수 없습니다.');
+                setDialogOpen(true);
               }
             })
           })}>급식</button>
           <br />
           <br />
-          {exam &&
-            <div className="border-t border-t-slate-400">
-              <br />
-              <p className="text-center">{exam.year}년 {exam.semester}학기 {exam.idx}차 지필평가</p>
-              <h1 className="text-6xl text-center">{
-                (new Date() as unknown as number) <= (new Date(exam.subjects[0].date) as unknown as number) ?
-                  <p>{`D-${Math.ceil((new Date(exam.subjects[0].date) as unknown as number - (new Date() as unknown as number)) / 1000 / 60 / 60 / 24)}`}</p>
-                  : (
-                    (new Date(exam.subjects.slice(-1)[0].date) as unknown as number) <= (new Date() as unknown as number - 9.5 * 60 * 60 * 1000) ?
-                      <>
-                        <p>수고하셨습니다!</p>
-                        <p className="text-base">시험이 종료되었습니다.</p>
-                      </>
-                      : <>
-                        <p>시험 {exam.subjects.indexOf(exam.subjects.find(subj => (new Date(subj.date) as unknown as number) - new Date().setHours(0, 0, 0, 0) === 0)!) + 1}일차</p>
-                        <p className="text-base">오늘 시험 과목: {exam.subjects.find(subj => (new Date(subj.date) as unknown as number) - new Date().setHours(0, 0, 0, 0) === 0)?.subjects.map((x, idx) => `${idx + 1}교시 ${x}`).join(', ') || '없음'}</p>
-                      </>
-                  )
-              }</h1>
-              <br />
+          {(exam || csat) &&
+            <div className="border-t border-t-slate-400 w-full grid grid-cols-2 pt-8 pb-8">
+              <span className="border-r border-r-slate-400 pl-4 pr-4 flex flex-col align-middle justify-center h-full">
+                <p className="text-center">{exam ? `${exam.year}년 ${exam.semester}학기 ${exam.idx}차 지필평가` : '지필평가'}</p>
+                <h1 className="text-6xl text-center">{exam ? (
+                  (new Date() as unknown as number) <= (new Date(exam.subjects[0].date) as unknown as number) ?
+                    <p>{`D-${Math.ceil((new Date(exam.subjects[0].date) as unknown as number - (new Date() as unknown as number)) / 1000 / 60 / 60 / 24)}`}</p>
+                    : (
+                      (new Date(exam.subjects.slice(-1)[0].date) as unknown as number) <= (new Date() as unknown as number - 9.5 * 60 * 60 * 1000) ?
+                        <>
+                          <p className="whitespace-nowrap">시험 종료</p>
+                          <p className="text-base">수고하셨습니다!</p>
+                        </>
+                        : <>
+                          <p>{exam.subjects.indexOf(exam.subjects.find(subj => (new Date(subj.date) as unknown as number) - new Date().setHours(0, 0, 0, 0) === 0)!) + 1}일차</p>
+                          <p className="text-base whitespace-pre-line">{exam.subjects.find(subj => (new Date(subj.date) as unknown as number) - new Date().setHours(0, 0, 0, 0) === 0)?.subjects.map((x, idx) => `${idx + 1}교시 ${x}`).join('\n') || '오늘 시험 과목 없음'}</p>
+                        </>
+                    )) : <p className="whitespace-nowrap">시험 없음</p>
+                }</h1>
+              </span>
+              <span className="pl-4 pr-4 flex flex-col align-middle justify-center h-full">
+                <p className="text-center">{csat ? `${csat.year}년 ${csat.month}월` : ''}</p>
+                <p className="text-center">{csat ? csat.type : '수능형 시험'}</p>
+                <h1 className="text-6xl text-center">{csat ? (
+                  (new Date() as unknown as number) <= (new Date(csat.date) as unknown as number) ?
+                    <p>{`D-${Math.ceil((new Date(csat.date) as unknown as number - (new Date() as unknown as number)) / 1000 / 60 / 60 / 24)}`}</p>
+                    : (
+                      (new Date(csat.date) as unknown as number) <= (new Date() as unknown as number - 9.5 * 60 * 60 * 1000) ?
+                        <>
+                          <p className="whitespace-nowrap">시험 종료</p>
+                          <p className="text-base">수고하셨습니다!</p>
+                        </>
+                        : <p>D-Day</p>
+                    )) : <p className="whitespace-nowrap">시험 없음</p>
+                }</h1>
+              </span>
             </div>
           }
           {posts.map((post, idx) => {
