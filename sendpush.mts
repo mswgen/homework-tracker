@@ -24,7 +24,7 @@ const oneDayLeft = allPosts.filter(post => post.deadline && new Date(post.deadli
 const examsCollection = db.collection('exams');
 // @ts-ignore
 const allExams = await examsCollection.find().toArray();
-const closestExam = allExams.filter(exam => (new Date(exam.subjects.slice(-1)[0].date) as unknown as number) > Date.now() - 24 * 60 * 60 * 1000).sort((a, b) => (new Date(a.subjects[0].date) as unknown as number) - (new Date(b.subjects[0].date) as unknown as number))[0];
+const closestExam = allExams.filter(exam => (new Date(exam.subjects.slice(-1)[0].date) as unknown as number) > Date.now()).sort((a, b) => (new Date(a.subjects[0].date) as unknown as number) - (new Date(b.subjects[0].date) as unknown as number))[0];
 if (closestExam) {
     console.log(closestExam)
     const tomorrow = closestExam.subjects.find((subject: any) => (new Date(subject.date) as unknown as number) - Date.now() <= 24 * 60 * 60 * 1000 && (new Date(subject.date) as unknown as number) - Date.now() > 0);
@@ -49,7 +49,7 @@ if (closestExam) {
 const csatCollection = db.collection('csat');
 // @ts-ignore
 const allCsats = await csatCollection.find().toArray();
-const closestCsat = allCsats.filter(csat => (new Date(csat.date) as unknown as number) > Date.now() - 24 * 60 * 60 * 1000).sort((a, b) => (new Date(a.date) as unknown as number) - (new Date(b.date) as unknown as number))[0];
+const closestCsat = allCsats.filter(csat => (new Date(csat.date) as unknown as number) > Date.now() && (new Date(csat.date) as unknown as number) <= Date.now() + 24 * 60 * 60 * 1000).sort((a, b) => (new Date(a.date) as unknown as number) - (new Date(b.date) as unknown as number))[0];
 if (closestCsat) {
     const data = {
         title: `수능/모평/학평 1일 전`,
