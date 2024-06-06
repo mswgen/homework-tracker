@@ -168,8 +168,8 @@ export default function Post({ params }: { params: { idx: string } }) {
                         }
                     }}>
                         {isCopied ?
-                            <Image src="/check.svg" alt="시간표 링크 복사하기" width={24} height={24} className="dark:invert max-w-8 max-h-8" />
-                            : <Image src="/copy.svg" alt="시간표 링크 복사하기" width={24} height={24} className="dark:invert max-w-8 max-h-8" />
+                            <Image src="/check.svg" alt="글 링크 복사하기" width={24} height={24} className="dark:invert max-w-8 max-h-8" />
+                            : <Image src="/copy.svg" alt="글 링크 복사하기" width={24} height={24} className="dark:invert max-w-8 max-h-8" />
                         }
                     </button>
                 </div>
