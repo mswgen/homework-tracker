@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cache-v27';
+const CACHE_NAME = 'cache-v28';
 const UPLOAD_PERMANENT_CACHE_NAME = 'upload-cache';
 
 self.addEventListener('install', event => {
