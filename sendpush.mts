@@ -35,7 +35,8 @@ if (closestExam) {
                 weekday: "long",
                 year: "numeric",
                 month: "long",
-                day: "numeric"
+                day: "numeric",
+                timeZone: 'Asia/Seoul'
             })}\n${tomorrow.subjects.map((subj: string, idx: number) => `${idx + 1}교시 ${subj}`).join('\n')}`,
             tag: 'exam'
         };
