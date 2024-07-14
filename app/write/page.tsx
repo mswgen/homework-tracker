@@ -4,6 +4,8 @@ import { formatDistanceStrict, formatDistanceToNowStrict } from "date-fns";
 import { ko } from "date-fns/locale";
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import remarkToc from "remark-toc";
+import rehypeSlug from 'rehype-slug'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { materialDark } from 'react-syntax-highlighter/dist/cjs/styles/prism'
 import Image from "next/image";
@@ -117,49 +119,53 @@ export default function WritePost() {
                 <br />
                 {preview ?
                     <div className="border border-slate-400 rounded-lg p-4 dark:bg-[#424242]">
-                        <Markdown remarkPlugins={[remarkGfm]} components={{
-                            // @ts-ignore
-                            code({ node, inline, className, children, ...props }) {
-                                const match = /language-(\w+)/.exec(className || "");
-                                return !inline && match ? (
-                                    // @ts-ignore
-                                    <SyntaxHighlighter
-                                        language={match[1]}
-                                        PreTag="div"
-                                        {...props}
-                                        style={materialDark}
-                                    >
-                                        {String(children).replace(/\n$/, "")}
-                                    </SyntaxHighlighter>
+                        <Markdown
+                            remarkPlugins={[
+                                [remarkGfm],
+                                [remarkToc, { tight: true, ordered: true, prefix: '', heading: '(table[ -]of[ -])?contents?|toc|목차' }]]}
+                            rehypePlugins={[rehypeSlug]} components={{
+                                // @ts-ignore
+                                code({ node, inline, className, children, ...props }) {
+                                    const match = /language-(\w+)/.exec(className || "");
+                                    return !inline && match ? (
+                                        // @ts-ignore
+                                        <SyntaxHighlighter
+                                            language={match[1]}
+                                            PreTag="div"
+                                            {...props}
+                                            style={materialDark}
+                                        >
+                                            {String(children).replace(/\n$/, "")}
+                                        </SyntaxHighlighter>
+                                    ) : (
+                                        <code {...props}>{children}</code>
+                                    );
+                                },
+                                img: (image) => (image.src && image.src.startsWith('/') && !image.src?.startsWith('//')) ? (
+                                    <ImageModal src={image.src || ""}>
+                                        <Image
+                                            src={image.src || ""}
+                                            alt={image.alt || ""}
+                                            width={600}
+                                            height={600}
+                                            className="w-[200px] sm:w-[250px] md:w-[300px] lg:w-[400px] xl:w-[500px] 2xl:w-[600px] h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px] xl:h-[500px] 2xl:h-[600px] object-cover"
+                                        />
+                                    </ImageModal>
                                 ) : (
-                                    <code {...props}>{children}</code>
-                                );
-                            },
-                            img: (image) => (image.src && image.src.startsWith('/') && !image.src?.startsWith('//')) ? (
-                                <ImageModal src={image.src || ""}>
-                                    <Image
-                                        src={image.src || ""}
-                                        alt={image.alt || ""}
-                                        width={600}
-                                        height={600}
-                                        className="w-[200px] sm:w-[250px] md:w-[300px] lg:w-[400px] xl:w-[500px] 2xl:w-[600px] h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px] xl:h-[500px] 2xl:h-[600px] object-cover"
-                                    />
-                                </ImageModal>
-                            ) : (
-                                <ImageModal src={image.src || ""}>
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                        src={image.src || ""}
-                                        alt={image.alt || ""}
-                                        width={600}
-                                        height={600}
-                                        className="w-[200px] sm:w-[250px] md:w-[300px] lg:w-[400px] xl:w-[500px] 2xl:w-[600px] h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px] xl:h-[500px] 2xl:h-[600px] object-cover" />
-                                </ImageModal>
-                            ),
-                            a: (link) => (
-                                <Link href={link.href || ""} rel="noopener noreferrer" target="_blank">{link.children}</Link>
-                            )
-                        }} className="prose dark:prose-invert">{content}</Markdown>
+                                    <ImageModal src={image.src || ""}>
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                            src={image.src || ""}
+                                            alt={image.alt || ""}
+                                            width={600}
+                                            height={600}
+                                            className="w-[200px] sm:w-[250px] md:w-[300px] lg:w-[400px] xl:w-[500px] 2xl:w-[600px] h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px] xl:h-[500px] 2xl:h-[600px] object-cover" />
+                                    </ImageModal>
+                                ),
+                                a: (link) => (
+                                    <Link href={link.href || ""} rel="noopener noreferrer" target={(link.href || '').startsWith('#') ? '_top' : "_blank"}>{link.children}</Link>
+                                )
+                            }} className="prose dark:prose-invert">{content}</Markdown>
                     </div>
                     : <textarea cols={64} rows={30} className="resize-none" value={content} onChange={e => {
                         setContent(e.currentTarget.value);
