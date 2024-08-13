@@ -25,6 +25,7 @@ export type AccountInfo = {
     lastName: string;
     perm: Perm;
     accepted: boolean;
+    answerer: boolean;
 }
 
 export const permToString = ['root', 'admin', 'user', ''];

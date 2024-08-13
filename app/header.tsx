@@ -28,12 +28,14 @@ export default function Header() {
                     setIsValidToken(false);
                     setAccount(null);
                 }
+            }).catch(() => {
+                setIsValidToken(true);
             });
         }
     }, [account, setAccount]);
 
     return (
-        <header className="sticky w-full grid grid-cols-[auto_1fr_auto] p-4 h-24">
+        <header className={`sticky w-full grid grid-cols-[auto_1fr_auto${(process.env.NEXT_PUBLIC_QNA_ENABLED == '1' && account && account.token && isValidToken) ? '_auto' : ''}] p-4 h-24`}>
             <Link href="/" className="grid grid-cols-[auto_auto]">
                 <Image src="/icon3.png" alt={process.env.NEXT_PUBLIC_TITLE || '숙제 트래커'} width={48} height={48} className="h-12 w-12" />
                 <div className="grid grid-rows-[1fr_auto_1fr] h-12">
@@ -42,7 +44,12 @@ export default function Header() {
                     <div></div>
                 </div>
             </Link>
-            <div></div>
+            <div className="grid-cols-[auto_1fr_auto_auto]"></div>
+            {process.env.NEXT_PUBLIC_QNA_ENABLED == '1' && account && account.token && isValidToken &&
+                <Link href="/question">
+                    <Image src="/qna.svg" alt="질문" width={36} height={36} className="dark:invert mr-2 mt-1.5 mb-1.5 h-9" />
+                </Link>
+            }
             {account && account.token && isValidToken
                 ? <Link href="/account">
                     <Image src="/account.svg" alt="계정" width={36} height={36} className="dark:invert mr-2 mt-1.5 mb-1.5 h-9" />

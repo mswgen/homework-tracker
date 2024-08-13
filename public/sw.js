@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cache-v30';
+const CACHE_NAME = 'cache-v31';
 const UPLOAD_PERMANENT_CACHE_NAME = 'upload-cache';
 
 self.addEventListener('install', event => {
@@ -46,6 +46,8 @@ self.addEventListener('activate', event => {
                 '/register/password',
                 '/register/passkey',
                 '/write',
+                '/question',
+                '/question/write',
                 '/account',
                 '/account/edit',
                 '/account.svg',
@@ -54,6 +56,7 @@ self.addEventListener('activate', event => {
                 '/offline.svg',
                 '/login.svg',
                 '/copy.svg',
+                '/qna.svg',
                 '/check.svg',
                 '/icon1.png',
                 '/icon2.png',
@@ -86,7 +89,7 @@ self.addEventListener('fetch', event => {
             }) : (
                 event.request.url.includes('/api') ?
                     (
-                        (event.request.url.includes('/api/post') && event.request.method === 'GET') ? (
+                        ((event.request.url.includes('/api/post') || event.request.url.includes('/api/question')) && event.request.method === 'GET') ? (
                             fetch(event.request)
                                 .then(response => {
                                     if (!response.ok) return response;
@@ -134,7 +137,7 @@ self.addEventListener('push', event => {
     body.forEach(data => {
         self.registration.showNotification(data.title, {
             body: data.body,
-            tag: data.title === '급식 알러지 알림' ? '/' : (data.title === '계정 생성됨' ? `/account/${data.tag}` : (data.tag === 'exam' ? '/' : `/post/${data.tag}`)),
+            tag: data.title === '급식 알러지 알림' ? '/' : (data.title === '계정 생성됨' ? `/account/${data.tag}` : (data.tag === 'exam' ? '/' : ((data.title.startsWith('질문') || data.title.startsWith('답변')) ? `/question/${data.tag}` : `/post/${data.tag}`))),
             icon: '/icon3.png',
             badge: '/pushicon.png'
         });

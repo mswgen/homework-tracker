@@ -1,10 +1,9 @@
 import { MongoClient } from "mongodb";
-import { sendNotification, setVapidDetails } from "web-push";
-import { postType } from "@/app/types";
+import { setVapidDetails, sendNotification } from "web-push";
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request, { params }: { params: { idx: string } }) {
+export async function POST(request: Request, { params }: { params: { idx: string } }) {
     const client = new MongoClient(process.env.MONGO!);
     await client.connect();
     const db = client.db(process.env.DB_NAME);
@@ -29,30 +28,45 @@ export async function GET(request: Request, { params }: { params: { idx: string 
         client.close();
         return new Response(JSON.stringify({ code: 1, msg: '승인 대기 중입니다.' }), { status: 403 });
     }
-    const postsCollection = db.collection('posts');
-    const post = await postsCollection.findOne({ count: Number(params.idx) });
-    if (!post) {
+    const questionsCollection = db.collection('questions');
+    const question = await questionsCollection.findOne({ idx: Number(params.idx) });
+    if (!question || (!userData.answerer && !question.public && question.user !== userData.id)) {
         client.close();
         return new Response(JSON.stringify({ code: 1, msg: '존재하지 않는 글입니다.' }), { status: 404 });
     }
-    const user = await usersCollection.findOne({ id: post.author });
+    const data = await request.json();
+    if (!userData.answerer && userData.perm >= 1) {
+        client.close();
+        return new Response(JSON.stringify({ code: 1, msg: '지정된 답변자만 답변할 수 있습니다.' }), { status: 403 });
+    }
+    await questionsCollection.updateOne({ idx: Number(params.idx) }, { $set: { answer: data.answer, solved: true } });
     client.close();
-    return new Response(JSON.stringify({ ...post, author: { id: post.author, firstName: user?.firstName, lastName: user?.lastName } }), { status: 200 });
+    setVapidDetails(`mailto:${process.env.VAPID_EMAIL!}`, process.env.NEXT_PUBLIC_VAPID_PUBKEY!, process.env.VAPID_PRIVKEY!);
+    const user = await usersCollection.findOne({ id: question.user });
+    if (user) user.subscriptions.forEach(async (sub: any) => {
+        sendNotification(sub, JSON.stringify([{
+            title: '답변 등록됨',
+            body: `${question.title}에 답변이 등록되었습니다.`,
+            tag: question.idx.toString()
+        }])).catch(() => { });
+    });
+    return new Response(JSON.stringify({ code: 0 }), { status: 200 });
 }
 
 export async function PUT(request: Request, { params }: { params: { idx: string } }) {
-    const token = request.headers.get('Authorization');
-    if (!token) {
-        return new Response(JSON.stringify({ code: 1, msg: '로그인이 필요합니다.' }), { status: 401 });
-    }
     const client = new MongoClient(process.env.MONGO!);
     await client.connect();
     const db = client.db(process.env.DB_NAME);
-    const tokenCollection = db.collection('tokens');
-    const tokenData = await tokenCollection.findOne({ token });
-    if (!tokenData) {
+    const tokensCollection = db.collection('tokens');
+    const token = request.headers.get('Authorization');
+    if (!token) {
         client.close();
         return new Response(JSON.stringify({ code: 1, msg: '로그인이 필요합니다.' }), { status: 401 });
+    }
+    const tokenData = await tokensCollection.findOne({ token });
+    if (!tokenData) {
+        client.close();
+        return new Response(JSON.stringify({ code: 1, msg: '유효하지 않은 토큰입니다.' }), { status: 401 });
     }
     const usersCollection = db.collection('users');
     const userData = await usersCollection.findOne({ id: tokenData.id });
@@ -64,51 +78,32 @@ export async function PUT(request: Request, { params }: { params: { idx: string 
         client.close();
         return new Response(JSON.stringify({ code: 1, msg: '승인 대기 중입니다.' }), { status: 403 });
     }
-    const postsCollection = db.collection('posts');
-    const post = await postsCollection.findOne({ count: Number(params.idx) });
-    if (!post) {
+    const questionsCollection = db.collection('questions');
+    const question = await questionsCollection.findOne({ idx: Number(params.idx) });
+    if (!question || (!userData.answerer && !question.public && question.user !== userData.id)) {
         client.close();
         return new Response(JSON.stringify({ code: 1, msg: '존재하지 않는 글입니다.' }), { status: 404 });
     }
-    if (userData.perm > 1 && post.author !== userData.id) {
-        client.close();
-        return new Response(JSON.stringify({ code: 1, msg: '다른 사람의 글을 수정하려면 관리자 권한이 필요합니다.' }), { status: 403 });
-    }
     const data = await request.json();
-    if (!data.title || data.type == null || !data.content) {
-        return new Response(JSON.stringify({ code: 1, msg: '제목, 타입, 내용을 입력하세요.' }), { status: 400 });
-    }
-    if (typeof data.title !== 'string' || typeof data.type !== 'number' || typeof data.content !== 'string' || (data.deadline && (typeof data.deadline !== 'string' || new Date(data.deadline).toString() === 'Invalid Date'))) {
-        return new Response(JSON.stringify({ code: 1, msg: '제목, 내용은 문자열, 유형은 숫자, 마감 기한은 유효한 날짜여야 합니다.' }), { status: 400 });
-    }
-    if (data.type < 0 || data.type >= (postType as Array<string>).length - 1) {
+    if (!userData.answerer && userData.perm >= 1) {
         client.close();
-        return new Response(JSON.stringify({ code: 1, msg: '유효하지 않은 유형입니다.' }), { status: 400 });
+        return new Response(JSON.stringify({ code: 1, msg: '지정된 답변자만 답변을 수정할 수 있습니다.' }), { status: 403 });
     }
-    if (data.type === 0 && userData.perm > 1) {
-        client.close();
-        return new Response(JSON.stringify({ code: 1, msg: '중요 공지는 관리자만 등록할 수 있습니다.' }), { status: 403 });
-    }
-    await postsCollection.updateOne({ count: parseInt(params.idx) }, { $set: { title: data.title, type: data.type, content: data.content, deadline: data.deadline ? new Date(data.deadline) : null, author: userData.id, created: new Date() } });
-    const userList = await usersCollection.find({ id: { $ne: userData.id } }).toArray();
-    setVapidDetails(`mailto:${process.env.VAPID_EMAIL!}`, process.env.NEXT_PUBLIC_VAPID_PUBKEY!, process.env.VAPID_PRIVKEY!);
-    userList.forEach(user => {
-        user.subscriptions.forEach(async (sub: any) => {
-            sendNotification(sub, JSON.stringify([{
-                title: `${postType[data.type]} 공지 수정됨`,
-                body: `${data.title}이(가) 수정되었습니다.`,
-                tag: params.idx
-            }])).catch(() => { });
-        });
-    });
+    await questionsCollection.updateOne({ idx: Number(params.idx) }, { $set: { answer: data.answer } });
     client.close();
+    setVapidDetails(`mailto:${process.env.VAPID_EMAIL!}`, process.env.NEXT_PUBLIC_VAPID_PUBKEY!, process.env.VAPID_PRIVKEY!);
+    const user = await usersCollection.findOne({ id: question.user });
+    if (user) user.subscriptions.forEach(async (sub: any) => {
+        sendNotification(sub, JSON.stringify([{
+            title: '답변 수정됨',
+            body: `${question.title}에 대한 답변이 등록되었습니다.`,
+            tag: question.idx.toString()
+        }])).catch(() => { });
+    });
     return new Response(JSON.stringify({ code: 0 }), { status: 200 });
 }
 
 export async function DELETE(request: Request, { params }: { params: { idx: string } }) {
-    if (!params.idx || params.idx === '' || isNaN(Number(params.idx))) {
-        return new Response(JSON.stringify({ code: 1, msg: '글 번호를 입력하세요.' }), { status: 400 });
-    }
     const client = new MongoClient(process.env.MONGO!);
     await client.connect();
     const db = client.db(process.env.DB_NAME);
@@ -133,17 +128,17 @@ export async function DELETE(request: Request, { params }: { params: { idx: stri
         client.close();
         return new Response(JSON.stringify({ code: 1, msg: '승인 대기 중입니다.' }), { status: 403 });
     }
-    const postsCollection = db.collection('posts');
-    const post = await postsCollection.findOne({ count: Number(params.idx) });
-    if (!post) {
+    const questionsCollection = db.collection('questions');
+    const question = await questionsCollection.findOne({ idx: Number(params.idx) });
+    if (!question || (!userData.answerer && !question.public && question.user !== userData.id)) {
         client.close();
         return new Response(JSON.stringify({ code: 1, msg: '존재하지 않는 글입니다.' }), { status: 404 });
     }
-    if (post.author !== userData.id && userData.perm > 1) {
+    if (userData.perm >= 1 && !userData.answerer) {
         client.close();
-        return new Response(JSON.stringify({ code: 1, msg: '작성자와 관리자만 삭제할 수 있습니다.' }), { status: 403 });
+        return new Response(JSON.stringify({ code: 1, msg: '지정된 답변자만 답변을 삭제할 수 있습니다.' }), { status: 403 });
     }
-    await postsCollection.deleteOne({ count: Number(params.idx) });
+    await questionsCollection.updateOne({ idx: Number(params.idx) }, { $unset: { answer: '' }, $set: { solved: false } });
     client.close();
     return new Response(JSON.stringify({ code: 0 }), { status: 200 });
 }

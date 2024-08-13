@@ -18,6 +18,7 @@ export default function MyAccountEditpage() {
     const [perm, setPerm] = useState(2);
     const [isAccepted, setIsAccepted] = useState(false);
     const [allergy, setAllergy] = useState<Array<number>>([]);
+    const [answerer, setAnswerer] = useState(false);
     const [saveState, setSaveState] = useState('');
     const [saveErrorMsg, setSaveErrorMsg] = useState('');
     const [isOffline, setIsOffline] = useState(false);
@@ -38,6 +39,7 @@ export default function MyAccountEditpage() {
                     setPerm(data.perm);
                     setIsAccepted(data.accepted || false);
                     setAllergy(data.allergy || []);
+                    setAnswerer(data.answerer || false);
                 } else {
                     setAccount(null);
                     router.replace('/login/id');
@@ -231,6 +233,37 @@ export default function MyAccountEditpage() {
                 <span className="text-xl">{isAccepted ? '승인됨' : '승인되지 않음'}</span>
                 <br />
                 <br />
+                {process.env.NEXT_PUBLIC_QNA_ENABLED == '1' &&
+                    <>
+                        <label htmlFor="answerer">질문 답변자 여부</label>
+                        <br />
+                        <input type="checkbox" id="answerer" checked={answerer} disabled={perm !== 0} className="mr-2 h-5 mt-1 mb-1" onChange={e => {
+                            setAnswerer(e.currentTarget.checked);
+                            setSaveState('저장 중');
+                            fetch('/api/account', {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', Authorization: account!.token! },
+                                body: JSON.stringify({
+                                    id: account?.id,
+                                    answerer: e.currentTarget.checked
+                                })
+                            }).then(async res => {
+                                if (res.ok) {
+                                    setSaveState('저장됨');
+                                } else {
+                                    setSaveState('저장 실패');
+                                    setSaveErrorMsg((await res.json()).msg);
+                                }
+                            }).catch(() => {
+                                setSaveState('저장 실패');
+                                setSaveErrorMsg('오프라인 상태');
+                            });
+                        }} />
+                        <span className="text-xl">{answerer ? '가능' : '불가능'}</span>
+                        <br />
+                        <br />
+                    </>
+                }
                 <span>알러지 정보</span>
                 <br />
                 {

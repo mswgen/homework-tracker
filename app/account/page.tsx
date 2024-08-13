@@ -83,6 +83,13 @@ export default function MyAccountInfoPage() {
             <br />
             <p className="text-sm">상태</p>
             <p className="text-xl">{accountInfo?.accepted ? '승인됨' : '승인되지 않음'}</p>
+            {process.env.NEXT_PUBLIC_QNA_ENABLED == '1' &&
+                <>
+                    <br />
+                    <p className="text-sm">질문 답변자 여부</p>
+                    <p className="text-xl">{accountInfo?.answerer ? '가능' : '불가능'}</p>
+                </>
+            }
             <div className="grid grid-cols-2">
                 <Link href="/account/edit" className="mr-4">
                     <button className="w-full p-3 mt-4 rounded-lg bg-gray-500 text-white hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring">정보 수정</button>

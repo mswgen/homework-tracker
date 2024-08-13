@@ -61,6 +61,7 @@ export default function UpdatePost({ params }: { params: { idx: string } }) {
     const [errorMsg, setErrorMsg] = useState<string>('');
     const [preview, setPreview] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [isOffline, setIsOffline] = useState(false);
 
     const [account, setAccount] = useLocalStorage<LSAccount | null>('account', null);
 
@@ -87,8 +88,29 @@ export default function UpdatePost({ params }: { params: { idx: string } }) {
                     setContent(data.content);
                 });
             }
-        })
+        }).catch(() => {
+            setIsOffline(true);
+        });
     }, [params.idx, router, account]);
+    useEffect(() => {
+        fetch('/api/is_online').then(() => {
+            setIsOffline(false);
+        }).catch(() => {
+            setIsOffline(true);
+        });
+    }, []);
+    useEffect(() => {
+        if (isOffline) {
+            const interval = setInterval(() => {
+                fetch('/api/is_online').then(() => {
+                    setIsOffline(false);
+                }).catch(() => {
+                    setIsOffline(true);
+                });
+            }, 1000);
+            return () => clearInterval(interval);
+        }
+    }, [isOffline]);
 
     return (
         <>
@@ -216,7 +238,7 @@ export default function UpdatePost({ params }: { params: { idx: string } }) {
                     }
                 });
             }} />
-            <button className="ml-[35%] w-[10%] mr-0 pt-3 pb-3 mt-0 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring" disabled={title === '' || content === '' || (hasDeadline && deadline === '')} onClick={e => {
+            <button className="ml-[35%] w-[10%] mr-0 pt-3 pb-3 mt-0 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring" disabled={title === '' || content === '' || (hasDeadline && deadline === '') || isOffline} onClick={e => {
                 e.preventDefault();
                 const target = e.currentTarget;
                 target.disabled = true;
@@ -243,7 +265,7 @@ export default function UpdatePost({ params }: { params: { idx: string } }) {
                         });
                     }
                 });
-            }}>확인</button>
+            }}>{isOffline ? '오프라인' : '확인'}</button>
             {errorMsg !== '' && <p className="text-red-500">{errorMsg}</p>}
         </>
     );
