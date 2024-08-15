@@ -12,12 +12,27 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLocalStorage } from "usehooks-ts";
 
+function CreatedTime({ datetime }: { datetime: Date }) {
+    const [tick, setTick] = useState<number>(0);
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setTick(tick + 1);
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [tick]);
+
+    return <div>{formatDistanceToNowStrict(new Date(datetime), { locale: ko, addSuffix: true })}</div>
+}
+
 export default function QuestionList() {
     const [isClient, setIsClient] = useState<boolean>(false);
     const [questions, setQuestions] = useState<Array<{ idx: number, user: string, title: string, created: Date, solved: boolean }>>([]);
     const [canView, setCanView] = useState<boolean>(true);
     const [isOffline, setIsOffline] = useState<boolean>(false);
     const [unsolvedOnly, setUnsolvedOnly] = useState<boolean>(false);
+    const [myOnly, setMyOnly] = useState<boolean>(true);
+    const [page, setPage] = useState<number>(1);
+    const [maxPage, setMaxPage] = useState<number>(1);
     const router = useRouter();
 
     const [account, setAccount] = useLocalStorage<LSAccount | null>('account', null);
@@ -77,6 +92,10 @@ export default function QuestionList() {
             }
         })
     }, [account, setAccount, setNotification]);
+    useEffect(() => {
+        setMaxPage(Math.max(1, Math.ceil(questions.filter((q: any) => !unsolvedOnly || !q.solved).filter((q: any) => !myOnly || q.user === account?.id).length / 10)));
+        if (questions.length > 0 && maxPage < page) setPage(maxPage);
+    }, [questions, page, maxPage, unsolvedOnly, myOnly, account]);
 
     return (
         <>
@@ -86,24 +105,37 @@ export default function QuestionList() {
                         <button className={`ml-[70%] w-[30%] mr-0 pt-3 pb-3 mt-0 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring`}>질문하기</button>
                     </Link>
                     <br />
-                    <input type="checkbox" id="unsolvedOnly" className="mr-2 h-5 mt-1 mb-1" onChange={(e) => {
+                    <input type="checkbox" id="unsolvedOnly" className="mr-2 h-5 mt-1 mb-1" checked={unsolvedOnly} onChange={(e) => {
                         setUnsolvedOnly(e.target.checked);
                     }} />
                     <label htmlFor="unsolvedOnly">미해결 질문만 보기</label>
                     <br />
+                    <input type="checkbox" id="myOnly" className="mr-2 h-5 mt-1 mb-1" checked={myOnly} onChange={(e) => {
+                        setMyOnly(e.target.checked);
+                    }} />
+                    <label htmlFor="myOnly">내가 쓴 질문만 보기</label>
                     <br />
-                    {questions.filter(q => !unsolvedOnly || !q.solved).map((question, idx) => {
+                    <br />
+                    {questions.filter(q => !unsolvedOnly || !q.solved).filter(q => !myOnly || q.user === account?.id).slice(page * 10 - 10, page * 10).map((question, idx) => {
                         return (
                             <Link key={idx} href={`/question/${question.idx}`}>
                                 <div className="border-t border-t-slate-400">
                                     <br />
                                     <h1 className="text-4xl inline">{question.title}</h1>
-                                    <div>{formatDistanceToNowStrict(new Date(question.created), { locale: ko, addSuffix: true })}</div>
+                                    <CreatedTime datetime={question.created} />
                                 </div>
                                 <br />
                             </Link>
                         );
                     })}
+                    <div className="text-center border-t border-t-slate-400">
+                        <br />
+                        {[...Array(maxPage)].map((_, idx) => (
+                            <button key={idx} className={`ml-1 mr-1 pt-1 pb-1 rounded-lg text-black dark:text-white transition-all ease-in-out duration-200 ${idx + 1 === page ? 'font-bold' : ''}`} onClick={() => {
+                                setPage(idx + 1);
+                            }}>{idx + 1}</button>
+                        ))}
+                    </div>
                 </>
                 : (
                     (account && account.token && isClient) ? (

@@ -1,9 +1,10 @@
+import { NextRequest } from "next/server";
 import { MongoClient } from "mongodb";
 import { sendNotification, setVapidDetails } from "web-push";
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
     const client = new MongoClient(process.env.MONGO!);
     await client.connect();
     const db = client.db(process.env.DB_NAME);
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
         return new Response(JSON.stringify({ code: 1, msg: '승인 대기 중입니다.' }), { status: 403 });
     }
     const questionsCollection = db.collection('questions');
-    const questions = (userData.answerer || userData.perm === 0) ? await questionsCollection.find().toArray() : await questionsCollection.find({ "$or": [{ user }, { public: true }] }).toArray();
+    const questions = ((userData.answerer || userData.perm === 0) ? (await questionsCollection.find().toArray()) : (await questionsCollection.find({ "$or": [{ user }, { public: true }] }).toArray())).sort((a, b) => b.created.getTime() - a.created.getTime());
     client.close();
     return new Response(JSON.stringify({ questions }), { status: 200 });
 }
