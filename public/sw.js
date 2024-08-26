@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cache-v33';
+const CACHE_NAME = 'cache-v43';
 const UPLOAD_PERMANENT_CACHE_NAME = 'upload-cache';
 
 self.addEventListener('install', event => {
@@ -87,7 +87,7 @@ self.addEventListener('fetch', event => {
                     );
                 });
             }) : (
-                event.request.url.includes('/api') ?
+                (event.request.url.includes('/api')) ?
                     (
                         ((event.request.url.includes('/api/post') || event.request.url.includes('/api/question')) && event.request.method === 'GET') ? (
                             fetch(event.request)
@@ -114,17 +114,17 @@ self.addEventListener('fetch', event => {
                                     });
                                 })
                         ) : fetch(event.request)
-                    )
-                    : caches.open(CACHE_NAME).then(async cache => {
-                        const cacheResponse = await cache.match(event.request);
-                        return (
-                            cacheResponse ||
-                            fetch(event.request).then(response => {
-                                if (response.ok) cache.put(event.request, response.clone());
-                                return response;
-                            })
-                        );
-                    })
+                    ) : (event.request.url.includes('/unlock') ? fetch(event.request)
+                        : caches.open(CACHE_NAME).then(async cache => {
+                            const cacheResponse = await cache.match(event.request);
+                            return (
+                                cacheResponse ||
+                                fetch(event.request).then(response => {
+                                    if (response.ok) cache.put(event.request, response.clone());
+                                    return response;
+                                })
+                            );
+                        }))
             )
     );
 });
