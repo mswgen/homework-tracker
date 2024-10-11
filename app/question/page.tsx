@@ -29,14 +29,14 @@ export default function QuestionList() {
     const [questions, setQuestions] = useState<Array<{ idx: number, user: string, title: string, created: Date, solved: boolean }>>([]);
     const [canView, setCanView] = useState<boolean>(true);
     const [isOffline, setIsOffline] = useState<boolean>(false);
-    const [unsolvedOnly, setUnsolvedOnly] = useState<boolean>(false);
-    const [myOnly, setMyOnly] = useState<boolean>(true);
     const [page, setPage] = useState<number>(1);
     const [maxPage, setMaxPage] = useState<number>(1);
     const router = useRouter();
-
+    
     const [account, setAccount] = useLocalStorage<LSAccount | null>('account', null);
     const [notification, setNotification] = useLocalStorage<any>('notification', null);
+    const [myOnly, setMyOnly] = useLocalStorage<boolean>('my_question_only', true);
+    const [unsolvedOnly, setUnsolvedOnly] = useLocalStorage<boolean>('unsolved_only', false);
 
     useEffect(() => {
         setIsClient(true);
@@ -67,10 +67,6 @@ export default function QuestionList() {
         }
     }, [isOffline]);
     useEffect(() => {
-        document.documentElement.style.setProperty("--viewport-width", ((document.querySelector('main') as HTMLElement).clientWidth / 9 * 10).toString());
-        return () => document.documentElement.style.setProperty("--viewport-width", "100vw");
-    });
-    useEffect(() => {
         if (!account || !account.token) setCanView(false);
         else fetch('/api/question', {
             method: 'GET',
@@ -98,7 +94,7 @@ export default function QuestionList() {
     }, [questions, page, maxPage, unsolvedOnly, myOnly, account]);
 
     return (
-        <>
+        <div className="w-[90%] md:w-[700px] md:border md:border-slate-400 md:p-8 md:rounded-lg ml-auto mr-auto">
             {canView && isClient ?
                 <>
                     <Link href="/question/write">
@@ -149,6 +145,6 @@ export default function QuestionList() {
                     )
                 )
             }
-        </>
+        </div>
     );
 }

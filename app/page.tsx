@@ -32,10 +32,6 @@ export default function Home() {
     setIsClient(true);
   }, []);
   useEffect(() => {
-    document.documentElement.style.setProperty("--viewport-width", ((document.querySelector('main') as HTMLElement).clientWidth / 9 * 10).toString());
-    return () => document.documentElement.style.setProperty("--viewport-width", "100vw");
-  });
-  useEffect(() => {
     if (!account || !account.token) setCanView(false);
     else fetch('/api/posts', {
       method: 'GET',
@@ -81,7 +77,7 @@ export default function Home() {
   }, []);
 
   return (
-    <>
+    <div className="w-[90%] md:w-[700px] md:border md:border-slate-400 md:p-8 md:rounded-lg ml-auto mr-auto">
       {canView && isClient ?
         <>
           {notification == null ?
@@ -235,7 +231,7 @@ export default function Home() {
             <div className="border-t border-t-slate-400 w-full grid grid-cols-2 pt-8 pb-8">
               <span className="border-r border-r-slate-400 pl-4 pr-4 flex flex-col align-middle justify-center h-full">
                 <p className="text-center">{exam ? `${exam.year}년 ${exam.semester}학기 ${exam.idx}차 지필평가` : '지필평가'}</p>
-                <h1 className="text-6xl text-center">{exam ? (
+                <h1 className="text-3xl sm:text-4xl md:text-6xl text-center">{exam ? (
                   (new Date() as unknown as number) <= (new Date(exam.subjects[0].date) as unknown as number) ?
                     <p>{`D-${Math.ceil((new Date(exam.subjects[0].date) as unknown as number - (new Date() as unknown as number)) / 1000 / 60 / 60 / 24)}`}</p>
                     : (
@@ -254,7 +250,7 @@ export default function Home() {
               <span className="pl-4 pr-4 flex flex-col align-middle justify-center h-full">
                 <p className="text-center">{csat ? `${csat.year}년 ${csat.month}월` : ''}</p>
                 <p className="text-center">{csat ? csat.type : '수능형 시험'}</p>
-                <h1 className="text-6xl text-center">{csat ? (
+                <h1 className="text-3xl sm:text-4xl md:text-6xl text-center">{csat ? (
                   (new Date() as unknown as number) <= (new Date(csat.date) as unknown as number) ?
                     <p>{`D-${Math.ceil((new Date(csat.date) as unknown as number - (new Date() as unknown as number)) / 1000 / 60 / 60 / 24)}`}</p>
                     : (
@@ -300,6 +296,6 @@ export default function Home() {
         )
       }
       {dialogOpen && <Dialog title={dialogTtile} type={dialogType} content={dialogContent} setShowDialog={setDialogOpen} callback={dialogCallback.callback} />}
-    </>
+    </div>
   );
 }

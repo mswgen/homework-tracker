@@ -57,12 +57,12 @@ function ToDeadLine({ post }: { post: { count: number, title: string, type: numb
     );
 }
 
-function ImageModal({ src, children }: { src: string, children: React.ReactNode }) {
+function ImageModal({ src, children, className }: { src: string, children: React.ReactNode, className?: string }) {
     const [displayed, setDisplayed] = useState(false);
 
     return (
-        <>
-            <button className="block" onClick={e => setDisplayed(true)}>
+        <div className={className}>
+            <button className="block w-full" onClick={e => setDisplayed(true)}>
                 {children}
             </button>
             {displayed &&
@@ -78,7 +78,7 @@ function ImageModal({ src, children }: { src: string, children: React.ReactNode 
                     </div>
                 </button>
             }
-        </>
+        </div>
     );
 }
 
@@ -97,10 +97,6 @@ export default function Post({ params }: { params: { idx: string } }) {
 
     const [account, setAccount] = useLocalStorage<LSAccount | null>('account', null);
 
-    useEffect(() => {
-        document.documentElement.style.setProperty("--viewport-width", ((document.querySelector('main') as HTMLElement).clientWidth / 9 * 10).toString());
-        return () => document.documentElement.style.setProperty("--viewport-width", "100vw");
-    });
     useEffect(() => {
         if (!account || !account.token) router.replace('/');
         else fetch(`/api/post/${Number(params.idx)}`, {
@@ -139,8 +135,8 @@ export default function Post({ params }: { params: { idx: string } }) {
     }, [lastCopied, isCopied]);
 
     return (
-        <>
-            <div className="border-b-slate-400 border-b">
+        <div className="w-full lg:w-[80%] md:grid md:grid-cols-2 md:gap-2 ml-auto mr-auto">
+            <div className="mb-4 lg:mt-24 max-md:border-b-slate-400 max-md:border-b md:mr-8">
                 <div className="grid grid-cols-[auto_auto_1fr]">
                     <h1 className="text-4xl">{post.title}</h1>
                     <Tag category={Number(post.type) ?? 5} className="mt-auto mb-auto ml-2" />
@@ -177,77 +173,81 @@ export default function Post({ params }: { params: { idx: string } }) {
                 </div>
                 <br />
             </div>
-            <div className="border-b border-b-slate-300">
-                <br />
-                <Markdown
-                    remarkPlugins={[
-                        [remarkGfm],
-                        [remarkToc, { tight: true, ordered: true, prefix: '', heading: '(table[ -]of[ -])?contents?|toc|목차' }]]}
-                    rehypePlugins={[rehypeSlug]} components={{
-                        // @ts-ignore
-                        code({ node, inline, className, children, ...props }) {
-                            const match = /language-(\w+)/.exec(className || "");
-                            return !inline && match ? (
-                                // @ts-ignore
-                                <SyntaxHighlighter
-                                    language={match[1]}
-                                    PreTag="div"
-                                    {...props}
-                                    style={materialDark}
-                                >
-                                    {String(children).replace(/\n$/, "")}
-                                </SyntaxHighlighter>
+            <div className="lg:mt-24 md:ml-8">
+                <div className="border-b border-b-slate-400">
+                    <Markdown
+                        remarkPlugins={[
+                            [remarkGfm],
+                            [remarkToc, { tight: true, ordered: true, prefix: '', heading: '(table[ -]of[ -])?contents?|toc|목차' }]]}
+                        rehypePlugins={[rehypeSlug]} components={{
+                            // @ts-ignore
+                            code({ node, inline, className, children, ...props }) {
+                                const match = /language-(\w+)/.exec(className || "");
+                                return !inline && match ? (
+                                    // @ts-ignore
+                                    <SyntaxHighlighter
+                                        language={match[1]}
+                                        PreTag="div"
+                                        {...props}
+                                        style={materialDark}
+                                    >
+                                        {String(children).replace(/\n$/, "")}
+                                    </SyntaxHighlighter>
+                                ) : (
+                                    <code {...props}>{children}</code>
+                                );
+                            },
+                            img: (image) => (image.src && image.src.startsWith('/') && !image.src?.startsWith('//')) ? (
+                                <ImageModal src={image.src || ""} className="w-full">
+                                    <Image
+                                        src={image.src || ""}
+                                        alt={image.alt || ""}
+                                        width={0}
+                                        height={0}
+                                        sizes="100vw"
+                                        className="w-full object-cover"
+                                    />
+                                </ImageModal>
                             ) : (
-                                <code {...props}>{children}</code>
-                            );
-                        },
-                        img: (image) => (image.src && image.src.startsWith('/') && !image.src?.startsWith('//')) ? (
-                            <ImageModal src={image.src || ""}>
-                                <Image
-                                    src={image.src || ""}
-                                    alt={image.alt || ""}
-                                    width={600}
-                                    height={600}
-                                    className="w-[200px] sm:w-[250px] md:w-[300px] lg:w-[400px] xl:w-[500px] 2xl:w-[600px] h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px] xl:h-[500px] 2xl:h-[600px] object-cover"
-                                />
-                            </ImageModal>
-                        ) : (
-                            <ImageModal src={image.src || ""}>
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                    src={image.src || ""}
-                                    alt={image.alt || ""}
-                                    width={600}
-                                    height={600}
-                                    className="w-[200px] sm:w-[250px] md:w-[300px] lg:w-[400px] xl:w-[500px] 2xl:w-[600px] h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px] xl:h-[500px] 2xl:h-[600px] object-cover" />
-                            </ImageModal>
-                        ),
-                        a: (link) => (
-                            <Link href={link.href || ""} rel="noopener noreferrer" target={(link.href || '').startsWith('#') ? '_top' : "_blank"}>{link.children}</Link>
-                        )
-                    }} className="prose dark:prose-invert">{post.content}</Markdown>
+                                <ImageModal src={image.src || ""} className="w-full">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                        src={image.src || ""}
+                                        alt={image.alt || ""}
+                                        width={0}
+                                        height={0}
+                                        sizes="100vw"
+                                        className="w-full object-cover"
+                                    />
+                                </ImageModal>
+                            ),
+                            a: (link) => (
+                                <Link href={link.href || ""} rel="noopener noreferrer" target={(link.href || '').startsWith('#') ? '_top' : "_blank"}>{link.children}</Link>
+                            )
+                        }} className="prose dark:prose-invert">{post.content}</Markdown>
+                    <br />
+                </div>
                 <br />
+                {(perm <= 1 || account?.id === post.author.id) &&
+                    <>
+                        <Link href={`/write/${params.idx}`}>
+                            <button className="ml-[40%] w-[25%] mr-0 pt-3 pb-3 mt-0 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring">수정</button>
+                        </Link>
+                        <button className="ml-[10%] w-[25%] mr-0 pt-3 pb-3 mt-0 rounded-lg bg-red-500 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring" onClick={e => {
+                            fetch(`/api/post/${Number(params.idx)}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    Authorization: account!.token!
+                                }
+                            }).then(response => {
+                                if (response.ok) router.push('/');
+                                else alert('삭제에 실패했습니다.');
+                            })
+                        }}>삭제</button>
+                    </>
+                }
+                {showDialog && <Dialog title={dialogTtile} content={dialogContent} type={dialogType} setShowDialog={setShowDialog} callback={dialogCallback.callback} />}
             </div>
-            <br />
-            {(perm <= 1 || account?.id === post.author.id) &&
-                <>
-                    <Link href={`/write/${params.idx}`}>
-                        <button className="ml-[40%] w-[25%] mr-0 pt-3 pb-3 mt-0 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring">수정</button>
-                    </Link>
-                    <button className="ml-[10%] w-[25%] mr-0 pt-3 pb-3 mt-0 rounded-lg bg-red-500 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring" onClick={e => {
-                        fetch(`/api/post/${Number(params.idx)}`, {
-                            method: 'DELETE',
-                            headers: {
-                                Authorization: account!.token!
-                            }
-                        }).then(response => {
-                            if (response.ok) router.push('/');
-                            else alert('삭제에 실패했습니다.');
-                        })
-                    }}>삭제</button>
-                </>
-            }
-            {showDialog && <Dialog title={dialogTtile} content={dialogContent} type={dialogType} setShowDialog={setShowDialog} callback={dialogCallback.callback} />}
-        </>
+        </div>
     );
 }

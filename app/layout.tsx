@@ -55,13 +55,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className="text-variable" style={{ fontFamily: Pretendard.style.fontFamily }}>
+    <html lang="ko" className={Pretendard.className}>
       <body>
         <Header />
-        <main className="flex flex-col items-center justify-between p-12 pb-0 overflow-auto whitespace-nowrap text-nowrap overflow-y-hidden w-max min-w-[40vw] ml-auto mr-auto">
-          <div className="border border-slate-400 rounded p-8 w-full">
-            {children}
-          </div>
+        <main className="w-[90%] mt-4 ml-auto mr-auto">
+          {children}
         </main>
         <div className="w-full mt-8 mb-8">
           <Link href="https://github.com/mswgen/homework-tracker" rel="noopener noreferrer" target="_blank">

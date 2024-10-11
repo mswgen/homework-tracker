@@ -17,12 +17,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLocalStorage } from "usehooks-ts";
 
-function ImageModal({ src, children }: { src: string, children: React.ReactNode }) {
+function ImageModal({ src, children, className }: { src: string, children: React.ReactNode, className?: string }) {
     const [displayed, setDisplayed] = useState(false);
 
     return (
-        <>
-            <button className="block" onClick={e => setDisplayed(true)}>
+        <div className={className}>
+            <button className="block w-full" onClick={e => setDisplayed(true)}>
                 {children}
             </button>
             {displayed &&
@@ -38,7 +38,7 @@ function ImageModal({ src, children }: { src: string, children: React.ReactNode 
                     </div>
                 </button>
             }
-        </>
+        </div>
     );
 }
 
@@ -54,10 +54,6 @@ export default function UpdateAnswer({ params }: { params: { idx: string } }) {
 
     const [account, setAccount] = useLocalStorage<LSAccount | null>('account', null);
 
-    useEffect(() => {
-        document.documentElement.style.setProperty("--viewport-width", ((document.querySelector('main') as HTMLElement).clientWidth / 9 * 10).toString());
-        return () => document.documentElement.style.setProperty("--viewport-width", "100vw");
-    });
     useEffect(() => {
         if (!account || !account.token) router.replace('/');
         else fetch(`/api/question/${params.idx}`, {
@@ -161,24 +157,27 @@ export default function UpdateAnswer({ params }: { params: { idx: string } }) {
                                     );
                                 },
                                 img: (image) => (image.src && image.src.startsWith('/') && !image.src?.startsWith('//')) ? (
-                                    <ImageModal src={image.src || ""}>
+                                    <ImageModal src={image.src || ""} className="w-full">
                                         <Image
                                             src={image.src || ""}
                                             alt={image.alt || ""}
-                                            width={600}
-                                            height={600}
-                                            className="w-[200px] sm:w-[250px] md:w-[300px] lg:w-[400px] xl:w-[500px] 2xl:w-[600px] h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px] xl:h-[500px] 2xl:h-[600px] object-cover"
+                                            width={0}
+                                            height={0}
+                                            sizes="100vw"
+                                            className="w-full object-cover"
                                         />
                                     </ImageModal>
                                 ) : (
-                                    <ImageModal src={image.src || ""}>
+                                    <ImageModal src={image.src || ""} className="w-full">
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                             src={image.src || ""}
                                             alt={image.alt || ""}
-                                            width={600}
-                                            height={600}
-                                            className="w-[200px] sm:w-[250px] md:w-[300px] lg:w-[400px] xl:w-[500px] 2xl:w-[600px] h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px] xl:h-[500px] 2xl:h-[600px] object-cover" />
+                                            width={0}
+                                            height={0}
+                                            sizes="100vw"
+                                            className="w-full object-cover"
+                                        />
                                     </ImageModal>
                                 ),
                                 a: (link) => (
@@ -186,12 +185,12 @@ export default function UpdateAnswer({ params }: { params: { idx: string } }) {
                                 )
                             }} className="prose dark:prose-invert">{answer}</Markdown>
                     </div>
-                    : <textarea cols={64} rows={30} className="resize-none" value={answer} onChange={e => {
+                    : <textarea rows={30} className="resize-none w-full" value={answer} onChange={e => {
                         setAnswer(e.currentTarget.value);
                     }}></textarea>}
             </div>
             <br />
-            <button className="mr-[35%] w-[20%] ml-0 pt-3 pb-3 mt-0 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring" disabled={isUploading} onClick={e => {
+            <button className="float-left ml-0 p-3 mt-0 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring" disabled={isUploading} onClick={e => {
                 e.preventDefault();
                 document.getElementById('upload')?.click();
             }}>{isUploading ? '업로드 중' : '파일 업로드'}</button>
@@ -227,7 +226,7 @@ export default function UpdateAnswer({ params }: { params: { idx: string } }) {
                     }
                 });
             }} />
-            <button className="ml-[35%] w-[10%] mr-0 pt-3 pb-3 mt-0 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring" disabled={title === '' || answer === '' || isOffline} onClick={e => {
+            <button className="float-right mr-0 p-3 mt-0 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring" disabled={title === '' || answer === '' || isOffline} onClick={e => {
                 e.preventDefault();
                 const target = e.currentTarget;
                 target.disabled = true;
