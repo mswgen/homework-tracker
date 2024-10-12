@@ -73,7 +73,7 @@ export default function RegisterPasskey() {
                                 }
                             } catch (e: any) {
                                 if (e.name === 'InvalidStateError') {
-                                    setErrorMsg('이미 패스키가 등록되어 있습니다.');
+                                    setErrorMsg('이미 등록된 패스키입니다.');
                                     setErrorCnt(errorCnt + 1);
                                 } else if (e.name === 'NotAllowedError') {
                                     setErrorMsg('패스키 등록이 취소되었습니다.');

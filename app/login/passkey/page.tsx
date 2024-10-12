@@ -61,7 +61,7 @@ export default function LoginPhase1() {
                 <h1 className="text-3xl">로그인</h1>
             </div>
             <div className="lg:mt-24">
-                <button className="w-full pt-4 pb-4 pl-8 pr-8 mt-8 mb-16 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring" onClick={(e) => {
+                <button className="w-full pt-4 pb-4 pl-8 pr-8 max-md:mt-8 mb-16 rounded-lg bg-blue-500 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:hover:bg-gray-500 dark:disabled:hover:bg-gray-700 transition-all ease-in-out duration-200 focus:ring" onClick={(e) => {
                     fetch('/api/passkey/login/prepare')
                         .then(res => res.json())
                         .then((data) => {
