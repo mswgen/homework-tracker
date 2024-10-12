@@ -63,14 +63,56 @@ function ImageModal({ src, children, className }: { src: string, children: React
     );
 }
 
+function CopyButton({ content }: { content: string }) {
+    const [isCopied, setIsCopied] = useState(false);
+    const [lastCopied, setLastCopied] = useState(0);
+    const [dialogTtile, setDialogTitle] = useState<string>('');
+    const [dialogType, setDialogType] = useState<'alert' | 'confirm'>('alert');
+    const [dialogContent, setDialogContent] = useState<string>('');
+    const [showDialog, setShowDialog] = useState<boolean>(false);
+    const [dialogCallback, setDialogCallback] = useState<{ callback: (result: boolean) => void }>({ callback: () => { } });
+
+    useEffect(() => {
+        if (!isCopied) return;
+        const timeout = setTimeout(() => {
+            setIsCopied(false);
+        }, 2000);
+        return () => clearTimeout(timeout);
+    }, [lastCopied, isCopied]);
+
+    return (
+        <button onClick={() => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(content).then(() => {
+                    setIsCopied(true);
+                    setLastCopied(Date.now());
+                }).catch(() => {
+                    setDialogType('alert');
+                    setDialogTitle('클립보드에 복사할 수 없음');
+                    setDialogContent('이 브라우저는 클립보드에 복사 기능을 지원하지만 알 수 없는 오류로 인해 현재 복사할 수 없습니다.\n아래 링크를 수동으로 복사해주세요.\n\n' + content);
+                    setShowDialog(true);
+                });
+            } else {
+                setDialogType('alert');
+                setDialogTitle('클립보드 미지원 브라우저');
+                setDialogContent('이 브라우저는 현재 클립보드에 복사 기능을 지원하지 않습니다.\n아래 링크를 수동으로 복사해주세요.\n\n' + content);
+                setShowDialog(true);
+            }
+        }}>
+            {isCopied ?
+                <Image src="/check.svg" alt="글 링크 복사하기" width={24} height={24} className="dark:invert max-w-8 max-h-8" />
+                : <Image src="/copy.svg" alt="글 링크 복사하기" width={24} height={24} className="dark:invert max-w-8 max-h-8" />
+            }
+        </button>
+    )
+}
+
 export default function Question({ params }: { params: { idx: string } }) {
     const router = useRouter();
 
     const [question, setQuestion] = useState<{ idx: number, title: string, solved: boolean, question: string, answer?: string, created: Date, user: { id: string, firstName?: string, lastName?: string } }>({ idx: 0, title: '', solved: false, question: '', created: new Date(1970, 0, 1, 9, 0, 0), user: { id: '' } });
     const [perm, setPerm] = useState(2);
     const [answerer, setAnswerer] = useState(false);
-    const [isCopied, setIsCopied] = useState(false);
-    const [lastCopied, setLastCopied] = useState(0);
     const [dialogTtile, setDialogTitle] = useState<string>('');
     const [dialogType, setDialogType] = useState<'alert' | 'confirm'>('alert');
     const [dialogContent, setDialogContent] = useState<string>('');
@@ -109,13 +151,6 @@ export default function Question({ params }: { params: { idx: string } }) {
             }
         })
     }, [account, router, setAccount]);
-    useEffect(() => {
-        if (!isCopied) return;
-        const timeout = setTimeout(() => {
-            setIsCopied(false);
-        }, 2000);
-        return () => clearTimeout(timeout);
-    }, [lastCopied, isCopied]);
 
     return (
         <div className="w-full lg:w-[80%] md:grid md:grid-cols-2 md:gap-2 ml-auto mr-auto">
@@ -131,29 +166,10 @@ export default function Question({ params }: { params: { idx: string } }) {
                     <div className="grid grid-cols-[auto_1fr_auto]">
                         <CreatedTime question={question} />
                         <span></span>
-                        <button onClick={() => {
-                            if ('clipboard' in navigator) {
-                                navigator.clipboard.writeText(location.href).then(() => {
-                                    setIsCopied(true);
-                                    setLastCopied(Date.now());
-                                }).catch(() => {
-                                    setDialogType('alert');
-                                    setDialogTitle('클립보드에 복사할 수 없음');
-                                    setDialogContent('이 브라우저는 클립보드에 복사 기능을 지원하지만 알 수 없는 오류로 인해 현재 복사할 수 없습니다.\n아래 링크를 수동으로 복사해주세요.\n\n' + location.href);
-                                    setShowDialog(true);
-                                });
-                            } else {
-                                setDialogType('alert');
-                                setDialogTitle('클립보드 미지원 브라우저');
-                                setDialogContent('이 브라우저는 현재 클립보드에 복사 기능을 지원하지 않습니다.\n아래 링크를 수동으로 복사해주세요.\n\n' + location.href);
-                                setShowDialog(true);
-                            }
-                        }}>
-                            {isCopied ?
-                                <Image src="/check.svg" alt="질문 링크 복사하기" width={24} height={24} className="dark:invert max-w-8 max-h-8" />
-                                : <Image src="/copy.svg" alt="질문 링크 복사하기" width={24} height={24} className="dark:invert max-w-8 max-h-8" />
-                            }
-                        </button>
+                        {typeof location !== 'undefined' ?
+                            <CopyButton content={location.href} />
+                            : <CopyButton content="" />
+                        }
                     </div>
                     <br />
                 </div>
